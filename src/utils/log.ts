@@ -30,6 +30,6 @@ function logMessage (type: TypeMessage, msg: string): void {
     })
 }
 
-export function addError (msg: string): void {logMessage('Error', msg)}
-export function addEvent (msg: string): void {logMessage('Event', msg)}
-export function addRequest (msg: string): void {logMessage('Request', msg)} 
+export function logError (msg: string): void {logMessage('Error', msg)}
+export function logEvent (msg: string): void {logMessage('Event', msg)}
+export function logRequest (msg: string): void {logMessage('Request', msg)} 
