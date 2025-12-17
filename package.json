@@ -4,6 +4,7 @@
   "description": "Site Ecoworking avec TypeScript",
   "license": "ISC",
   "author": "",
+  "type": "module",
   "main": "app.js",
   "scripts": {
     "start": "node --env-file=.env app.ts",

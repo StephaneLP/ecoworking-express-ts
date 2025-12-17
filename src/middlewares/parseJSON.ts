@@ -1,12 +1,11 @@
-const log = require('../utils/log')
+import type { Request, Response, NextFunction } from 'express'
+import { logError } from '../utils/log.ts'
 
-const checkJSONSyntax = (err, req, res, next) => {
+export function checkJSONSyntax (err: Error, req: Request, res: Response, next: NextFunction): void {
     if (err instanceof SyntaxError) {
-        res.status(err.status).json({status: 'error', code: err.status, message: 'Erreur de syntaxe : les données transmises au serveur ne sont pas conformes au format JSON'})
-        log.addError(`Code : ${err.status} ; Fonction : checkJSONSyntax ; Message : ${err.name}, ${err.message}`)
+        res.status(500).json({status: 'error', code: 500, message: 'Erreur de syntaxe : les données transmises au serveur ne sont pas conformes au format JSON'})
+        logError(`Code : 500 ; Fonction : checkJSONSyntax ; Message : ${err.name}, ${err.message}`)
         return
     }
     next()
 }
-
-module.exports = checkJSONSyntax

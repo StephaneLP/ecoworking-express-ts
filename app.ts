@@ -1,14 +1,13 @@
-const express = require('express')
-const serveFavicon = require('serve-favicon')
-const cors = require('cors')
-const checkJSONSyntax = require('./src/middlewares/parseJSON.ts')
-const { logEvent } = require('./src/utils/log.ts')
+import express from 'express'
+import serveFavicon from 'serve-favicon'
+import cors from 'cors'
+import { checkJSONSyntax } from './src/middlewares/parseJSON.ts'
+import { logEvent } from './src/utils/log.ts'
 
-// import { fileURLToPath } from 'url'
-// import { dirname } from 'path'
-// const __filename = fileURLToPath(import.meta.url)
-// const __dirname = dirname(__filename)
-
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const app = express()
 
@@ -25,11 +24,11 @@ app.use(cors())
 Middlewares spécifiques à l'environnement de développement
 *********************************************************/
 
-if (process.env.NODE_ENV === 'development') {
-    const morgan = require('morgan')
+// if (process.env.NODE_ENV === 'development') {
+//     const morgan = require('morgan')
 
-    app.use(morgan('dev'))
-}
+//     app.use(morgan('dev'))
+// }
 
 /*********************************************************
 Connexion BDD
