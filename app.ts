@@ -1,19 +1,20 @@
 import express from 'express'
-import serveFavicon from 'serve-favicon'
-import cors from 'cors'
-import { checkJSONSyntax } from './src/middlewares/parseJSON.ts'
 import { logEvent } from './src/utils/log.ts'
-
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
 const app = express()
 
 /*********************************************************
 Middlewares
 *********************************************************/
+
+import serveFavicon from 'serve-favicon'
+import cors from 'cors'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+import { checkJSONSyntax } from './src/middlewares/parseJSON.ts'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 app.use(serveFavicon(__dirname + '/favicon.png'))
 app.use(express.json())
@@ -24,17 +25,29 @@ app.use(cors())
 Middlewares spécifiques à l'environnement de développement
 *********************************************************/
 
-// if (process.env.NODE_ENV === 'development') {
-//     const morgan = require('morgan')
+import { createRequire } from 'node:module'
 
-//     app.use(morgan('dev'))
-// }
+const require = createRequire(import.meta.url)
+
+if (process.env.NODE_ENV === 'development') {
+    const morgan = require('morgan')
+
+    app.use(morgan('dev'))
+}
 
 /*********************************************************
 Connexion BDD
 *********************************************************/
 
-// require('./src/config/db.js')
+import './src/config/db.ts'
+
+/*********************************************************
+Routes
+*********************************************************/
+
+import cityRoutes from './src/routes/city.routes.ts'
+
+app.use('/ville/', cityRoutes)
 
 /*********************************************************
 Ouverture du port
