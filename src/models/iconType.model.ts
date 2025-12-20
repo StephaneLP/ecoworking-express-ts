@@ -1,7 +1,7 @@
-import Model from '../definitions/types.models.ts'
+import Model from './common/types.ts'
 
-export const city: Model = {
-    tableName: 'city',
+export const iconType: Model = {
+    tableName: 'icon_type',
     tableColumns: {
         id: {
             type: 'integer',
@@ -12,20 +12,12 @@ export const city: Model = {
         name: {
             type: 'string',
             nullAuthorized: false,
-            length: 100,
+            length: 45,
             emptyAuthorized: false
-        },
-        is_active: {
-            type: 'boolean',
-            nullAuthorized: false
-        },
-        rank: {
-            type: 'integer',
-            nullAuthorized: false
         }
     },
     dateColumns: {
         createDate: 'created_at',
-        updateDate: 'updated_at',
+        updateDate: 'updated_at'
     }
 }
