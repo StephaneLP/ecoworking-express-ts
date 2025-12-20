@@ -1,4 +1,4 @@
-import Model from '../definitions/types.models.ts'
+import { Model } from '../definitions/model.ts'
 
 export const city: Model = {
     tableName: 'city',

@@ -1,4 +1,4 @@
-import Model from './common/types.ts'
+import { Model } from '../definitions/model.ts'
 
 export const role: Model = {
     tableName: 'role',

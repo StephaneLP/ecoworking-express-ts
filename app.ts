@@ -39,7 +39,7 @@ if (process.env.NODE_ENV === 'development') {
 Connexion BDD
 *********************************************************/
 
-import './src/config/db.ts'
+import './src/config/db.init.ts'
 
 /*********************************************************
 Routes
