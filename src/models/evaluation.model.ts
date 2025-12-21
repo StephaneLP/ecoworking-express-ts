@@ -1,4 +1,4 @@
-import { Model } from '../definitions/model.ts'
+import { Model } from '../_orm/export'
 
 export const evaluation: Model = {
     tableName: 'evaluation',

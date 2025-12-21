@@ -1,10 +1,10 @@
-import { DbRelations } from '../definitions/model.ts'
+import { DbRelations, relationType } from '../_orm/export'
 
-const relationType = {
-    onetoOne: 'hasOne',
-    oneToMany: 'oneToMany',
-    belongsTo: 'belongsTo'
-}
+// Définition du type nom d'une table (Liste des tables de la BDD)
+
+export type TableName = 'city' | 'ecoworking' | 'equipment' | 'evaluation' | 'icon' | 'icon_type' | 'role' | 'user' | 'information'
+
+// Définition des relations entre les tables de la BDD
 
 export const dbRelations: Partial<DbRelations> = {
     role: {
@@ -40,31 +40,4 @@ export const dbRelations: Partial<DbRelations> = {
         user: [relationType.belongsTo, 'evaluation.user_id = user.id'],
         ecoworking: [relationType.belongsTo, 'evaluation.ecoworking_id = ecoworking.id']
     }
-}
-
-export const op = {
-    equal: '=',
-    like: 'LIKE',
-    in: 'IN'
-}
-
-// La table 'mainTableName' est-elle parente de la table 'table' (relation one to many) ?
-const isParent = (mainTableName, table) => {
-    return dbRelations[mainTableName][table][0] === relationType.oneToMany
-}
-
-// La table 'mainTableName' est-elle parente d'au moins une table du tableau joinTables (relation one to many) ?
-const hasChildren = (mainTableName, joinTables) => {
-    for (let table of joinTables) {
-        if (isParent(mainTableName, table[0].tableName)) return true
-    }
-    return false
-}
-
-// Recherche de la colonne étant la clé primaire de la table
-const getPKColumn = (columns) => {
-    for (let column in columns) {
-        if (columns[column].primaryKey) return column
-    }
-    return "id" // Champ PK par défaut
 }
