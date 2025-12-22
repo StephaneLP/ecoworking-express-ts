@@ -1,4 +1,4 @@
-import { DbRelations, relationType } from '../_orm/export'
+import { DbRelations, relationType } from '../orm/export'
 
 // Définition du type nom d'une table (Liste des tables de la BDD)
 

@@ -1,4 +1,4 @@
-import { Model } from '../_orm/export'
+import { Model } from '../orm/export'
 
 export const iconType: Model = {
     tableName: 'icon_type',

@@ -7,4 +7,4 @@ export * from './definitions/models'
 // Fonctions et constantes (BDD)
 
 export * from './db/relations'
-export * from './db/utils'
+export * from './db/requests'
