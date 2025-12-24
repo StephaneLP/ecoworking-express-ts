@@ -1,12 +1,12 @@
 import express from 'express'
-import { trimStringValues } from '../utils/tools.ts'
+import { parseQuery } from '../utils/tools.ts'
 
 /*********************************************************
 READ / GET / SELECT
 *********************************************************/
 
 export function readCities (req: express.Request, res: express.Response): void {
-    const query = trimStringValues(req.query)
+    const query = parseQuery(req.query)
     console.log(query)
 
 
