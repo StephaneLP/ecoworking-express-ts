@@ -1,6 +1,6 @@
 // Définition des relations entre les tables de la BDD
 
-import { TableName } from '../../config/db'
+import type { TableName } from '../../config/db.ts'
 
 type DbRelatedTables = {
     [key in TableName]: [string, string]

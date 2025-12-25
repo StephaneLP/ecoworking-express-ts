@@ -1,9 +1,8 @@
-import { Model } from './models'
-import { TableName } from '../../config/db'
+import type { Model } from './models.ts'
 
-export type MainTable = [Model, TableName[]]
+export type MainTable = [Model, string[]]
 
-export type JoinTables = [[Model, TableName[]]]
+export type JoinTables = [[Model, string[]]]
 
 export type TablesRequired = {
     mainTable: MainTable,

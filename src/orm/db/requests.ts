@@ -1,4 +1,4 @@
-import { TableColumns } from '../definitions/models'
+import type { TableColumns } from '../definitions/models.ts'
 
 // Opérateur clause WHERE
 

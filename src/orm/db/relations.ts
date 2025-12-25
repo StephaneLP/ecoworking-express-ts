@@ -1,6 +1,6 @@
-import { TableName } from '../../config/db'
-import { JoinTables } from '../definitions/controllers'
-import { dbRelations } from '../../config/db'
+import type { TableName } from '../../config/db.ts'
+import type { JoinTables } from '../definitions/controllers.ts'
+import { dbRelations } from '../../config/db.ts'
 
 // Types de relation
 
