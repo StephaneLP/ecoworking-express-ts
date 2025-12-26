@@ -1,14 +1,5 @@
-import type { TableName } from '../../config/db.ts'
+import { type TableName, dbRelations, relationType } from '../../config/db.ts'
 import type { JoinTables } from '../definitions/controllers.ts'
-import { dbRelations } from '../../config/db.ts'
-
-// Types de relation
-
-export const relationType = {
-    oneToOne: 'hasOne',
-    oneToMany: 'oneToMany',
-    belongsTo: 'belongsTo'
-}
 
 // La table 'mainTableName' est-elle parente de la table 'table' (relation one to many) ?
 

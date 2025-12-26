@@ -1,9 +1,16 @@
 import type { DbRelations } from '../orm/export.ts'
-import { relationType } from '../orm/export.ts'
 
 // Définition du type nom d'une table (Liste des tables de la BDD)
 
 export type TableName = 'city' | 'ecoworking' | 'equipment' | 'evaluation' | 'icon' | 'icon_type' | 'role' | 'user' | 'information'
+
+// Types de relation
+
+export const relationType = {
+    oneToOne: 'hasOne',
+    oneToMany: 'oneToMany',
+    belongsTo: 'belongsTo'
+}
 
 // Définition des relations entre les tables de la BDD
 
