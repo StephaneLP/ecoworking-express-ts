@@ -29,32 +29,3 @@ export function parseQuery(obj: ObjReqQuery): ObjQuery {
 
     return result
 }
-
-import type { ReadAllParams } from '../orm/export.ts'
-export function initQueryParams(): ReadAllParams {
-    const query: ReadAllParams = {
-        tables: {
-            mainTable: [{
-                tableName: 'city',
-                tableColumns: {}
-            }, ['']],
-            joinTables: [[{
-                tableName: 'city',
-                tableColumns: {}
-            }, ['']]]
-        },
-        filter: [
-            [{
-                tableName: 'city',
-                tableColumns: {}
-            }, '', '', ['']]
-        ],
-        order: [
-            [{
-                tableName: 'city',
-                tableColumns: {}
-            }, '', '']
-        ]
-    }
-    return query
-}

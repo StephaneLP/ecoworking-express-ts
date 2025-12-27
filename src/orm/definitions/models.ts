@@ -1,8 +1,8 @@
 // Définition d'un modèle (représente une table de la BDD)
 
-import type { TableName } from '../../config/db.ts'
+import type { TableName } from '../../config/db.tables.ts'
 
-export type TableColumnsProperties = {
+type TableColumnsProperties = {
     type: 'integer' | 'string' | 'boolean',
     nullAuthorized: boolean,
     length?: number,

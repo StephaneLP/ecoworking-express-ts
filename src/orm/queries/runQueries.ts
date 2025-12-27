@@ -1,10 +1,10 @@
-import type { ReadAllParams } from '../definitions/controllers'
+import type { Params } from '../definitions/controllers'
 
 /*********************************************************
 ÉXÉCUTION REQUÊTE SELECT
 *********************************************************/
 
-export async function runQuerySelect (params: ReadAllParams) {
+export async function runQuerySelect (params: Params) {
     // let conn
     try {
         // let check

@@ -1,4 +1,4 @@
-import type { Model } from '../orm/export.ts'
+import type { Model } from '../orm/definitions.ts'
 
 export const equipment: Model = {
     tableName: 'equipment',
