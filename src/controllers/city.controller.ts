@@ -10,7 +10,7 @@ import { op } from '../orm/db.ts'
 READ / GET / SELECT
 *********************************************************/
 
-export async function readCities (req: express.Request, res: express.Response): Promise<void> {
+export function readCities (req: express.Request, res: express.Response): void {
     const query = parseQuery(req.query)
     const queryParams = {} as Params
 
@@ -27,7 +27,7 @@ export async function readCities (req: express.Request, res: express.Response): 
     // Clause ORDER BY
     queryParams.order = [[city, query.col || 'name', query.dir || 'ASC']]
 
-    await readRecords('readCities', queryParams, res)
+    readRecords('readCities', queryParams, res)
 }
 
 // export function readCities (req: express.Request, res: express.Response): void {

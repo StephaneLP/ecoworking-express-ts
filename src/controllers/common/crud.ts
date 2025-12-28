@@ -2,7 +2,7 @@ import express from 'express'
 import type { Params } from '../../orm/definitions.ts'
 import { sendResult, sendError } from './result.ts'
 
-export async function readRecords(callingFunction: string, params: Params, res: express.Response): Promise<void> {
+export function readRecords(callingFunction: string, params: Params, res: express.Response): void {
     try {
     //     const dbRes = await queries.runQuerySelect(params)
 
