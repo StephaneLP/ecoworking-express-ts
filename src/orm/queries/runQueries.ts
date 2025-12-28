@@ -1,41 +1,44 @@
-import type { Params } from '../definitions/controllers'
+import mariadb from 'mariadb'
+import type { Params, DbResult } from '../definitions/controllers.ts'
+import { checkWhereParams } from './validate.ts'
+import { pool } from '../../config/db.init.ts'
 
 /*********************************************************
 ÉXÉCUTION REQUÊTE SELECT
 *********************************************************/
 
-export async function runQuerySelect (params: Params) {
-    // let conn
+export async function runQuerySelect (params: Params): Promise<DbResult> {
+    let conn 
     try {
-        // let check
+        let checkParams: DbResult
 
-        // // Validation des Paramètres (clause WHERE)
-        // check = checkQueryParams(params)
-        // if (!check.success) return check
+        // Validation des Paramètres (clause WHERE)
+        if (params.where && params.where.length > 0) {
+            checkParams = checkWhereParams(params)
+            if (!checkParams.success) return checkParams
+        }
 
         // // Validation du tri (clause ORDER)
-        // check = checkOrderParams(params)
-        // if (!check.success) return check
+        // checkParams = checkOrderParams(params)
+        // if (!checkParams.success) return checkParams
 
         // // Construction de la requête SQL
         // const sql = build.sqlSelect(params)
 
-        // // Éxecution de la requête
-        // conn = await db.getConnection()
+        // Éxecution de la requête
+        conn = await pool.getConnection() 
+        const result = await conn.query('SELECT 1 + 1 AS solution')
         // const result = await conn.query({nestTables: true, sql: sql.reqString}, sql.reqParams)
 
         // return {success: true, result: result}
 
-        return {success: true, result: true}
+        return {success: true, result: result}
     }
     catch(error: unknown) {
-        if (error instanceof Error) {
-            throw new Error(`${error.message}`)
-        } else {
-            throw new Error(`Erreur inattendue ${error}`)
-        }
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> runQuerySelect()'
+        throw new Error(message)
     }
-    // finally {
-    //     if (conn) conn.end()
-    // }
+    finally {
+        if (conn) conn.end()
+    }
 }

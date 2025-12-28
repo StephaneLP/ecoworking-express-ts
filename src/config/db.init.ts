@@ -21,7 +21,8 @@ export const pool: mariadb.Pool = mariadb.createPool({
 Test de la connexion à la BDD
 *********************************************************/
 
-const testConnect = async () => {
+;
+(async () => {
     let conn;
     try {
         conn = await pool.getConnection();
@@ -30,10 +31,8 @@ const testConnect = async () => {
         logError(`Erreur de connexion à la BDD (err=${err})`)
     } finally {
         if (conn) conn.end()
-    }
-}
-
-testConnect()
+    }    
+})()
 
 /*********************************************************
 Initialisation du modèle relationnel : relations entre les tables de la BDD

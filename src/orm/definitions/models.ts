@@ -2,7 +2,7 @@
 
 import type { TableName } from '../../config/db.tables.ts'
 
-type TableColumnsProperties = {
+export type TableColumnsProperties = {
     type: 'integer' | 'string' | 'boolean',
     nullAuthorized: boolean,
     length?: number,

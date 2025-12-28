@@ -82,7 +82,7 @@ export function sendResult(res: express.Response, code: number, fct: string, mes
     logRequest(`Code : ${code} ; Fonction : ${fct} ; Message : ${message} (nb lignes: ${nbRows})`)
 }
 
-export function sendError(res: express.Response, code: number, fct: string, frontMessage: string, logMessage: string) {
+export function sendError(res: express.Response, code: number, frontMessage: string, logMessage: string) {
     res.status(code).json({status: 'error', code: code, message: frontMessage})
-    logError(`Code : ${code} ; Fonction : ${fct} ; Message : ${frontMessage} ${logMessage ? `(${logMessage})` : ''}`) 
+    logError(`Code : ${code} ; Message : ${frontMessage}${logMessage ? ` [${logMessage}]` : ''}`) 
 }
