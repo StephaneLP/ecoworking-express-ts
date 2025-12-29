@@ -1,3 +1,3 @@
-export * from './definitions/controllers.ts'
-export * from './definitions/dbrelations.ts'
-export * from './definitions/models.ts'
+export * from './definitions/Queries.ts'
+export * from './definitions/Relations.ts'
+export * from './definitions/Models.ts'

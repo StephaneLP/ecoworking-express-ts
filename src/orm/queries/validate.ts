@@ -1,41 +1,53 @@
-import type { Params, WhereParams, DbResult } from '../definitions/controllers.ts'
-import type { TableColumnsProperties } from '../definitions/models.ts'
+import type { Params, WhereParams, OrderParams, DbResult } from '../definitions/Queries.ts'
+import type { TableColumnsProperties } from '../definitions/Models.ts'
 
 /*********************************************************
-VÉRIFICATION DES PARAMÈTRES DE LA CLAUSE WHERE : REQUÊTES SELECT
-(1 OU PLUSIEURS TABLES DANS LA CLAUSE SQL FROM)
+VÉRIFICATION DES PARAMÈTRES DE LA CLAUSE WHERE
+(REQUÊTES SELECT)
 *********************************************************/
 
-export function checkWhereParams(params: WhereParams) {
+export function checkWhereParams(params: WhereParams): DbResult {
+    let msg: string
+    
     try {
-        let constraints: TableColumnsProperties, value: string
+        let constraints: TableColumnsProperties, value: string | number | boolean
 
         for (let param of params) {
-            constraints = param[0].tableColumns[param[1]]
+            constraints = param.model.tableColumns[param.column]
+
             if(!constraints) {
-                return {success: false, functionName: 'checkQueryParams', message: `Colonne ${param[1]} absente du modèle ${param[0].tableName} -> checkWhereParams()`}
+                return {success: false, message: `Colonne ${param.column} absente du modèle ${param.model.tableName} -> checkWhereParams()`}
             }
-            for (let i in param[3]) {
-                value = param[3][i]
+
+            for (let i in param.values) {
+                value = param.values[i]
+
+                if (typeof value !== 'string') continue
 
                 switch (constraints.type) {
                     case 'integer':
                         if (!stringAsInteger(value)) {
-                            return {success: false, message: `Erreur type de donnée (colonne ${param[1]} du modèle ${param[0].tableName}) : type integer attendu) -> checkWhereParams()`}
+                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type integer attendu) -> checkWhereParams()`
+                            return {success: false, message: msg}
                         }
-                        // param[3][i] = Number(value)
+                        param.values[i] = Number(value)
                         break
                     case 'string':
+                        if (!constraints.length) {
+                            msg = `Erreur propriété length absente (colonne ${param.column} du modèle ${param.model.tableName}) -> checkWhereParams()`
+                            return {success: false, message: msg}
+                        }
                         if (value.length > constraints.length) {
-                            return {success: false, message: `Erreur longueur (colonne ${param[1]} du modèle ${param[0].tableName}) : string longueur max <= ${constraints.length}) -> checkWhereParams()`}
+                            msg = `Erreur longueur (colonne ${param.column} du modèle ${param.model.tableName}) : string longueur max <= ${constraints.length}) -> checkWhereParams()`
+                            return {success: false, message: msg}
                         }
                         break
                     case 'boolean':
                         if (!stringAsBoolean(value)) {
-                            return {success: false, message: `Erreur type de donnée (colonne ${param[1]} du modèle ${param[0].tableName}) : type boolean attendu) -> checkWhereParams()`}
+                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type boolean attendu) -> checkWhereParams()`
+                            return {success: false, message: msg}
                         }
-                        param[3][i] = (['1', 'true'].includes(value.toLowerCase()) ? '1' : '0')
-                        // param[3][i] = (['1', 'true'].includes(value.toLowerCase()) ? 1 : 0)
+                        param.values[i] = (['1', 'true'].includes(value.toLowerCase()) ? 1 : 0)
                         break
                 }
             }
@@ -44,26 +56,41 @@ export function checkWhereParams(params: WhereParams) {
         return {success: true}
     }
     catch(error: unknown) {
-        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readRecords()'
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkWhereParams()'
         throw new Error(message)
     }
 }
 
-// const checkOrderParams = (params) => {
-//     try {
-//         for (let condition of params.orderParams) {
-//             if (!condition[0].tableColumns[condition[1]]) {
-//                 return {success: false, functionName: 'validate.checkOrderParams', msg: `Colonne de tri '${condition[1]}' absente du modèle`}
-//             }
-//             condition[2] = (condition[2].toUpperCase() === 'DESC' ? 'DESC' : 'ASC')            
-//         }
+/*********************************************************
+VÉRIFICATION DES PARAMÈTRES DE LA CLAUSE ORDER BY
+(REQUÊTES SELECT)
+*********************************************************/
 
-//         return {success: true}
-//     }
-//     catch(err) {
-//         throw new Error(`validate.checkOrderParams - ${err.name} (${err.message})`)
-//     }
-// }
+export function checkOrderParams(params: OrderParams): DbResult {
+    let msg: string
+
+    try {
+
+        for (let condition of params) {
+            if (!condition.model.tableColumns[condition.column]) {
+                msg = `Colonne de tri '${condition.column}' absente du modèle ${condition.model.tableName} -> checkOrderParams`
+                return {success: false, message: msg}
+            }
+            condition.dir = (condition.dir.toUpperCase() === 'ASC' ? 'ASC' : 'DESC')            
+        }
+
+        return {success: true}
+    }
+    catch(error) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkOrderParams()'
+        throw new Error(message)
+    }
+}
+
+function throwError(error: unknown, fctName: string) {
+    const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkOrderParams()'
+        throw new Error(message)
+}
 
 /*********************************************************
 VÉRIFICATION DES DONNÉES : REQUÊTES CREATE, UPDATE & DELETE
@@ -167,9 +194,10 @@ OUTILS
 *********************************************************/
 
 // Vérification qu'une variable string représente un entier positif
-function stringAsInteger(str: string): boolean {
+function stringAsInteger(str: unknown): boolean {
     const numbers = ['0','1','2','3','4','5','6','7','8','9']
 
+    if (typeof str !== 'string') return false
     for (let el of str) {
         if (!numbers.includes(el)) return false
     }
@@ -177,6 +205,7 @@ function stringAsInteger(str: string): boolean {
 }
 
 // Vérification qu'une variable string représente un booléen
-function stringAsBoolean(str: string): boolean {
+function stringAsBoolean(str: unknown): boolean {
+    if (typeof str !== 'string') return false
     return ['0','1','true','false'].includes(str.toLowerCase())
 }

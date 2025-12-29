@@ -17,17 +17,17 @@ export async function readCities (req: express.Request, res: express.Response): 
         const queryParams = {} as Params
 
         // Tables
-        queryParams.mainTable = [city, ['*']],
-        queryParams.joinTables = [[ecoworking, ['*']]]
+        queryParams.mainTable = {model: city, columns: ['*']}
+        queryParams.joinTables = [{model: ecoworking, columns: ['name', 'is_active']}]
 
         // Clause WHERE
         queryParams.where = []
-        if(query.id) queryParams.where.push([city, 'id', op.in, query.id.split(',')])
-        if(query.name) queryParams.where.push([city, 'name', op.like, [query.name], '%?%'])
-        if(query.is_active) queryParams.where.push([city, 'is_active', op.equal, [query.is_active]])
+        if(query.id) queryParams.where.push({model: city, column: 'id', op: op.in, values: query.id.split(',')})
+        if(query.name) queryParams.where.push({model: city, column: 'name', op: op.like, values: [query.name], pattern: '%?%'})
+        if(query.is_active) queryParams.where.push({model: city, column: 'is_active', op: op.equal, values: [query.is_active]})
 
         // Clause ORDER BY
-        queryParams.order = [[city, query.col || 'name', query.dir || 'ASC']]
+        queryParams.order = [{model: city, column: query.col || 'name', dir: query.dir || 'ASC'}]
 
         await readRecords(res, queryParams, 'readCities')        
     }

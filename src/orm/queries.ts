@@ -1,1 +1,1 @@
-export * from './queries/runQueries.ts'
+export * from './queries/run.ts'

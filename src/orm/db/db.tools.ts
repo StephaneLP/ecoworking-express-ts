@@ -1,4 +1,4 @@
-import type { TableColumns } from '../definitions/models.ts'
+import type { TableColumns } from '../definitions/Models.ts'
 
 // Opérateur clause WHERE
 
@@ -14,5 +14,5 @@ export function getPKColumn (columns: TableColumns): string {
     for (let column in columns) {
         if (columns[column].primaryKey) return column
     }
-    return "id" // Champ PK par défaut
+    return 'id' // Champ PK par défaut
 }

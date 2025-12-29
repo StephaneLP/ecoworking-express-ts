@@ -1,6 +1,6 @@
 import type { TableName } from '../../config/db.tables.ts'
-import type { JoinTables } from '../definitions/controllers.ts'
-import type { DbRelations } from '../definitions/dbrelations.ts'
+import type { JoinTables } from '../definitions/Queries.ts'
+import type { DbRelations } from '../definitions/Relations.ts'
 
 // Relations entre les tables de la BDD
 
@@ -25,7 +25,7 @@ export function isParent (mainTableName: TableName, table: TableName): boolean {
 
 export function hasChildren (mainTableName: TableName, joinTables: JoinTables): boolean {
     for (let table of joinTables) {
-        if (isParent(mainTableName, table[0].tableName)) return true
+        if (isParent(mainTableName, table.model.tableName)) return true
     }
     return false
 }

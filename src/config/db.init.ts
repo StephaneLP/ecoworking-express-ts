@@ -1,6 +1,6 @@
 import mariadb from 'mariadb'
 import { logEvent, logError } from "../utils/log.ts"
-import { dbRelations, relationType } from '../orm/db/relations.ts'
+import { dbRelations, relationType } from '../orm/db/db.relations.ts'
 
 /*********************************************************
 Connecteur à la BDD (Pool)

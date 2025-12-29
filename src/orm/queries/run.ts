@@ -1,6 +1,7 @@
 import mariadb from 'mariadb'
-import type { Params, DbResult } from '../definitions/controllers.ts'
-import { checkWhereParams } from './validate.ts'
+import type { Params, DbResult, BuildQuery } from '../definitions/Queries.ts'
+import { checkWhereParams, checkOrderParams } from './validate.ts'
+import { buildQuerySelect } from './build.ts'
 import { pool } from '../../config/db.init.ts'
 
 /*********************************************************
@@ -14,16 +15,24 @@ export async function runQuerySelect (params: Params): Promise<DbResult> {
 
         // Validation des Paramètres (clause WHERE)
         if (params.where && params.where.length > 0) {
-            checkParams = checkWhereParams(params)
-            if (!checkParams.success) return checkParams
+            checkParams = checkWhereParams(params.where)
+            if (!checkParams.success) {
+                checkParams.message += ' -> runQuerySelect()'
+                return checkParams
+            }
         }
 
-        // // Validation du tri (clause ORDER)
-        // checkParams = checkOrderParams(params)
-        // if (!checkParams.success) return checkParams
+        // Validation du tri (clause ORDER)
+        if (params.order && params.order.length > 0) {
+            checkParams = checkOrderParams(params.order)
+            if (!checkParams.success) {
+                checkParams.message += ' -> runQuerySelect()'
+                return checkParams
+            }
+        }
 
-        // // Construction de la requête SQL
-        // const sql = build.sqlSelect(params)
+        // Construction de la requête SQL
+        const sql: BuildQuery = buildQuerySelect(params)
 
         // Éxecution de la requête
         conn = await pool.getConnection() 
