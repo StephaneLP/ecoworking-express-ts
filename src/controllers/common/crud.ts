@@ -17,10 +17,7 @@ export async function readRecords(res: express.Response, params: Params, calling
         const formatDbRes: any = dbRes.result
         sendResult(res, 200, callingFunction, 'Requête exécutée avec succès', dbRes.result.length, formatDbRes)
 
-
-
-    //     const formatDbRes = Number(process.env.DB_RES_NEST_FORMAT) ? formatResponse(params, dbRes.result) : dbRes.result
-        // 
+        // const formatDbRes = Number(process.env.DB_RES_NEST_FORMAT) ? formatResponse(params, dbRes.result) : dbRes.result
         // sendResult(res, 200, callingFunction, 'Requête exécutée avec succès', 1, dbRes)
     }
     catch(error: unknown) {

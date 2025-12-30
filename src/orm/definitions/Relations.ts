@@ -2,7 +2,7 @@
 
 import type { TableName } from '../../config/db.tables.ts'
 
-type DbRelatedTables = {
+export type DbRelatedTables = {
     [key in TableName]: [string, string]
 }
 

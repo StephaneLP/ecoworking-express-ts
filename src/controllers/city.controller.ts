@@ -17,8 +17,8 @@ export async function readCities (req: express.Request, res: express.Response): 
         const queryParams = {} as Params
 
         // Tables
-        queryParams.mainTable = {model: city, columns: ['*']}
-        queryParams.joinTables = [{model: ecoworking, columns: ['name', 'is_active']}]
+        queryParams.mainTable = {model: city, columns: ['id', 'name', 'is_active']}
+        queryParams.joinTables = [{model: ecoworking, columns: ['name', 'is_active'], join: 'LEFT'}]
 
         // Clause WHERE
         queryParams.where = []

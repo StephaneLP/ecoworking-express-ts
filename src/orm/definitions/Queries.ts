@@ -1,8 +1,17 @@
 import type { Model } from './Models.ts'
 
-export type Table = {model: Model, columns: string[]}
+export type JoinType = 'INNER' | 'LEFT' | 'RIGHT'
 
-export type JoinTables = Table[]
+export type Table = {
+    model: Model,
+    columns: string[]
+}
+
+export type JoinTables = Array<{
+    model: Model,
+    columns: string[],
+    join: JoinType
+}>
 
 export type WhereParams = Array<{
     model: Model, 

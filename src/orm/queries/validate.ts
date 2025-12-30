@@ -1,5 +1,37 @@
-import type { Params, WhereParams, OrderParams, DbResult } from '../definitions/Queries.ts'
+import type { TableName } from '../../config/db.tables.ts'
+import type { Table, JoinTables, WhereParams, OrderParams, DbResult } from '../definitions/Queries.ts'
+import type { DbRelations } from '../definitions.ts'
 import type { TableColumnsProperties } from '../definitions/Models.ts'
+import {dbRelations, isParent, hasChildren} from '../db/db.relations.ts'
+
+/*********************************************************
+VÉRIFICATION DES LIENS DE PARENTÉ ENTRE LES TABLES
+(REQUÊTES SELECT)
+*********************************************************/
+
+export function checkRelationShip(mainTable: Table, joinTables: JoinTables): void {
+    let msg: string, joinTableName: TableName
+
+    try {
+        const mainTableName = mainTable.model.tableName
+        if (!dbRelations[mainTableName]) {
+            msg = `Erreur modèle relationnel (table principale ${mainTableName} absente de l'initialisation du modèle relationnel : voir objet dbRelations)`
+            throw new Error(msg)
+        }
+
+        for (let table of joinTables) {
+            joinTableName = table.model.tableName
+            if (!dbRelations[mainTableName][joinTableName]) {
+                msg = `Erreur modèle relationnel (table jointe ${joinTableName} absente des tables liées à la table ${mainTableName} : voir objet dbRelations)`
+                throw new Error(msg)
+            }            
+        }
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkRelationShip()'
+        throw new Error(message)
+    }
+}
 
 /*********************************************************
 VÉRIFICATION DES PARAMÈTRES DE LA CLAUSE WHERE
@@ -16,7 +48,8 @@ export function checkWhereParams(params: WhereParams): DbResult {
             constraints = param.model.tableColumns[param.column]
 
             if(!constraints) {
-                return {success: false, message: `Colonne ${param.column} absente du modèle ${param.model.tableName} -> checkWhereParams()`}
+                msg = `Colonne ${param.column} absente du modèle ${param.model.tableName}`
+                throw new Error(msg)
             }
 
             for (let i in param.values) {
@@ -27,7 +60,7 @@ export function checkWhereParams(params: WhereParams): DbResult {
                 switch (constraints.type) {
                     case 'integer':
                         if (!stringAsInteger(value)) {
-                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type integer attendu) -> checkWhereParams()`
+                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type integer attendu -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         param.values[i] = Number(value)
@@ -35,16 +68,16 @@ export function checkWhereParams(params: WhereParams): DbResult {
                     case 'string':
                         if (!constraints.length) {
                             msg = `Erreur propriété length absente (colonne ${param.column} du modèle ${param.model.tableName}) -> checkWhereParams()`
-                            return {success: false, message: msg}
+                            throw new Error(msg)
                         }
                         if (value.length > constraints.length) {
-                            msg = `Erreur longueur (colonne ${param.column} du modèle ${param.model.tableName}) : string longueur max <= ${constraints.length}) -> checkWhereParams()`
+                            msg = `Erreur longueur (colonne ${param.column} du modèle ${param.model.tableName}) : string longueur max <= ${constraints.length} -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         break
                     case 'boolean':
                         if (!stringAsBoolean(value)) {
-                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type boolean attendu) -> checkWhereParams()`
+                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type boolean attendu -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         param.values[i] = (['1', 'true'].includes(value.toLowerCase()) ? 1 : 0)
@@ -70,7 +103,6 @@ export function checkOrderParams(params: OrderParams): DbResult {
     let msg: string
 
     try {
-
         for (let condition of params) {
             if (!condition.model.tableColumns[condition.column]) {
                 msg = `Colonne de tri '${condition.column}' absente du modèle ${condition.model.tableName} -> checkOrderParams`
@@ -89,7 +121,7 @@ export function checkOrderParams(params: OrderParams): DbResult {
 
 function throwError(error: unknown, fctName: string) {
     const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkOrderParams()'
-        throw new Error(message)
+    throw new Error(message)
 }
 
 /*********************************************************

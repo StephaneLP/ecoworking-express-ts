@@ -1,6 +1,6 @@
 import mariadb from 'mariadb'
 import type { Params, DbResult, BuildQuery } from '../definitions/Queries.ts'
-import { checkWhereParams, checkOrderParams } from './validate.ts'
+import { checkRelationShip, checkWhereParams, checkOrderParams } from './validate.ts'
 import { buildQuerySelect } from './build.ts'
 import { pool } from '../../config/db.init.ts'
 
@@ -12,6 +12,11 @@ export async function runQuerySelect (params: Params): Promise<DbResult> {
     let conn 
     try {
         let checkParams: DbResult
+
+        // Validation des liens de parenté entre les tables
+        if (params.joinTables && params.joinTables.length > 0) {
+            checkRelationShip(params.mainTable, params.joinTables)
+        }
 
         // Validation des Paramètres (clause WHERE)
         if (params.where && params.where.length > 0) {
@@ -36,8 +41,8 @@ export async function runQuerySelect (params: Params): Promise<DbResult> {
 
         // Éxecution de la requête
         conn = await pool.getConnection() 
-        const result = await conn.query('SELECT 1 + 1 AS solution')
-        // const result = await conn.query({nestTables: true, sql: sql.reqString}, sql.reqParams)
+        // const result = await conn.query('SELECT 1 + 1 AS solution')
+        const result = await conn.query({nestTables: true, sql: sql.queryString}, sql.queryParams)
 
         // return {success: true, result: result}
 

@@ -1,4 +1,5 @@
-import type { Params, DbResult, BuildQuery } from '../definitions/Queries.ts'
+import type { TableName } from '../../config/db.tables.ts'
+import type { Params, DbResult, BuildQuery, JoinType } from '../definitions/Queries.ts'
 import {dbRelations, isParent, hasChildren} from '../db/db.relations.ts'
 import {op, getPKColumn} from '../db/db.tools.ts'
 
@@ -7,21 +8,28 @@ CONSTRUCTION REQUÊTE SELECT
 *********************************************************/
 
 export function buildQuerySelect(params: Params): BuildQuery {
-    // SELECT : liste des colonnes
-    const reqColumns = buildColumnsList(params).join(', ')
+    try {
+        // SELECT : liste des colonnes
+        const queryColumns = buildColumnsList(params).join(', ')
 
-    // FROM : tables et jointures
-    const reqFROM = buildFromConditions(params)
-console.log('STOP', reqFROM)
-    // WHERE : liste des conditions et tableau des valeurs
-    // const conditions = buildWhereConditions(params)
-    // const arrParams = [...conditions.params]
-    // const reqConditions = [...conditions.conditions].join(' AND ')
-    // const reqWhere = reqConditions ? ` WHERE ${reqConditions}` : ''
-    // ORDER : tri
-    // const reqOrder = ` ORDER BY ${[...buildSortConditions(params)].join(', ')}`
+        // FROM : tables et jointures
+        const queryFROM = buildFromConditions(params)
 
-    // return {queryString: `SELECT ${reqColumns} FROM ${reqFROM}${reqWhere}${reqOrder}`, queryParams: arrParams}
+        // WHERE : liste des conditions et tableau des valeurs
+        const whereConditions = buildWhereConditions(params)
+        const queryWHERE = (whereConditions.conditions.length > 0 ? ` WHERE ${whereConditions.conditions.join(' AND ')}` : '')
+        const queryParams = whereConditions.params
+
+        // ORDER : tri
+        const orderConditions = buildOrderConditions(params)
+        const queryOrder = (orderConditions.length > 0 ? ` ORDER BY ${orderConditions.join(', ')}` : '')
+
+        return {queryString: `SELECT ${queryColumns} FROM ${queryFROM}${queryWHERE}${queryOrder}`, queryParams: queryParams}
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildQuerySelect()'
+        throw new Error(message)
+    }
 }
 
 // const sqlSelectById = (params) =>  {
@@ -120,105 +128,143 @@ CONSTRUCTION LISTE DES COLONNES (SELECT)
 *********************************************************/
 
 function buildColumnsList (params: Params): string[] {
-    const mainTable = params.mainTable
-    const joinTables = params.joinTables
-    const arrColumns: string[] = []
+    try {
+        const mainTable = params.mainTable
+        const joinTables = params.joinTables
+        const arrColumns: string[] = []
 
-    // Table principale
-    const mainTableName = mainTable.model.tableName
-    for (let column of mainTable.columns) {
-        arrColumns.push(`${mainTableName}.${column}`)
-    }
+        // Table principale
+        const mainTableName = mainTable.model.tableName
+        for (let column of mainTable.columns) {
+            arrColumns.push(`${mainTableName}.${column}`)
+        }
 
-    // Ajout de la clé primaire en tant que 'buildKey' pour la mise en forme JSON si tables enfants jointes    
-    if (joinTables && hasChildren(mainTable.model.tableName, joinTables)) {
-        const mainTablePK = getPKColumn(mainTable.model.tableColumns)
-        arrColumns.push(`${mainTableName}.${mainTablePK} AS buildKey`)
-    }
+        // Ajout de la clé primaire en tant que 'buildKey' pour la mise en forme JSON si tables enfants jointes    
+        if (joinTables && hasChildren(mainTable.model.tableName, joinTables)) {
+            const mainTablePK = getPKColumn(mainTable.model.tableColumns)
+            arrColumns.push(`${mainTableName}.${mainTablePK} AS buildKey`)
+        }
 
-    // Tables jointes (facultatives)
-    if (joinTables) {
-        for (let table of joinTables) {
-            const tableName = table.model.tableName
+        // Tables jointes (facultatives)
+        if (joinTables) {
+            for (let table of joinTables) {
+                const tableName = table.model.tableName
 
-            for (let column of table.columns) {
-                arrColumns.push(`${tableName}.${column}`)
-            }
+                for (let column of table.columns) {
+                    arrColumns.push(`${tableName}.${column}`)
+                }
 
-            // Ajout de la clé primaire en tant que 'buildKey' pour la mise en forme JSON si tables enfants jointes
-            if (isParent(mainTable.model.tableName, table.model.tableName)) {
-                const joinTablePK = getPKColumn(table.model.tableColumns)
-                arrColumns.push(`${tableName}.${joinTablePK} AS buildKey`)
+                // Ajout de la clé primaire en tant que 'buildKey' pour la mise en forme JSON si tables enfants jointes
+                if (isParent(mainTable.model.tableName, table.model.tableName)) {
+                    const joinTablePK = getPKColumn(table.model.tableColumns)
+                    arrColumns.push(`${tableName}.${joinTablePK} AS buildKey`)
+                }
             }
         }
+        
+        return arrColumns
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildColumnsList()'
+        throw new Error(message)
     }
     
-    return arrColumns
 }
 
 /*********************************************************
 CONSTRUCTION CLAUSES
 *********************************************************/
 
-// // clause FROM
+// Clause FROM
 function buildFromConditions (params: Params): string {
-    const mainTable = params.mainTable
-    const joinTables = params.joinTables
-    const mainTableName = mainTable.model.tableName
-    let tableList: string, condition, tableName
+    try {
+        const mainTable = params.mainTable
+        const joinTables = params.joinTables
+        const mainTableName = mainTable.model.tableName
+        let clauseFrom: string, joinTableName: TableName, condition: [string, string] | undefined
 
-    tableList = mainTableName
-    
-    for (let joinTable of joinTables) {
-        tableName = joinTable[0].tableName
-        condition = dbRelations[mainTableName][tableName][1]
-        tableList += ` LEFT JOIN ${tableName} ON ${condition}`
+        clauseFrom = mainTableName
+        
+        if(joinTables) {
+            for (let joinTable of joinTables) {
+                joinTableName = joinTable.model.tableName
+                condition = dbRelations[mainTableName][joinTableName]
+
+                if (condition) {
+                    clauseFrom += ` ${joinTable.join} JOIN ${joinTableName} ON ${condition[1]}`
+                }
+            }        
+        }
+
+        return clauseFrom        
     }
-
-    return tableList
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildFromConditions()'
+        throw new Error(message)
+    }
 }
 
 // // Clause WHERE
-// const buildWhereConditions = (params)  => {
-//     const arrParams = [], arrPattern = [], arrConditions = []
-//     let value, pattern
+function buildWhereConditions (params: Params) {
+    try {
+        const arrConditions: string[] = []
+        const arrParams: Array<string | number | boolean> = []
 
-//     for (let param of params.queryParams) {
-//         switch (param[2]) { // Opérateur
-//             case op.like:
-//                 value = param[3][0] // Tableau des valeurs (1 élément)
-//                 value = value.replace('%', '\\%')       
-//                 value = value.replace('_', '\\_')
-//                 value = param[4].replace('?', value)
-//                 arrParams.push(value)
-//                 pattern = '?'
-//                 break
-//             case op.in:
-//                 param[3].forEach(e => {
-//                     arrPattern.push('?')
-//                     arrParams.push(e)
-//                 })
-//                 pattern = `(${arrPattern.join()})`
-//                 arrPattern.length = 0
-//                 break
-//             default:
-//                 value = param[3][0]
-//                 arrParams.push(value)
-//                 pattern = '?'
-//         }
-    
-//         arrConditions.push(`${param[0].tableName}.${param[1]} ${param[2]} ${pattern}`)
-//     }
+        if (params.where) {
+            const arrPattern: string[] = []
+            let value: string, pattern: string
 
-//     return {conditions: arrConditions, params: arrParams}
-// }
+            for (let param of params.where) {
+                switch (param.op) {
+                    case op.like: // Tableau des valeurs : 1 élément
+                        value = String(param.values[0])
+                        value = value.replace('%', '\\%')       
+                        value = value.replace('_', '\\_')
+                        value = (param.pattern ? param.pattern.replace('?', value) : value)
+                        arrParams.push(value)
+                        pattern = '?'
+                        break
+                    case op.in: // Tableau des valeurs : plusieurs éléments
+                        param.values.forEach(e => {
+                            arrPattern.push('?')
+                            arrParams.push(e)
+                        })
+                        pattern = `(${arrPattern.join()})`
+                        arrPattern.length = 0
+                        break
+                    default: // Tableau des valeurs : 1 élément
+                        value = String(param.values[0])
+                        arrParams.push(value)
+                        pattern = '?'
+                }
 
-// // Clause ORDER
-// const buildSortConditions = (params) => {
-//     const arrOrder = []
-//     for (let condition of params.orderParams) {
-//         arrOrder.push(`${condition[0].tableName}.${condition[1]} ${condition[2]}`)
-//     }
+                arrConditions.push(`${param.model.tableName}.${param.column} ${param.op} ${pattern}`)            
+            }
+        }
+        
+        return {conditions: arrConditions, params: arrParams}
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildWhereConditions()'
+        throw new Error(message)
+    }
+}
 
-//     return arrOrder
-// }
+// Clause ORDER
+function buildOrderConditions(params: Params): string[] {
+    try {
+        const arrOrder: string[] = []
+
+        if (params.order) {
+            for (let condition of params.order) {
+                arrOrder.push(`${condition.model.tableName}.${condition.column} ${condition.dir}`)
+            }            
+        }
+
+        return arrOrder       
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildOrderConditions()'
+        throw new Error(message)
+    }
+}
