@@ -19,12 +19,14 @@ export function checkRelationShip(mainTable: Table, joinTables: JoinTables): voi
             throw new Error(msg)
         }
 
-        for (let table of joinTables) {
-            joinTableName = table.model.tableName
-            if (!dbRelations[mainTableName][joinTableName]) {
-                msg = `Erreur modèle relationnel (table jointe ${joinTableName} absente des tables liées à la table ${mainTableName} : voir objet dbRelations)`
-                throw new Error(msg)
-            }            
+        if (joinTables && joinTables.length > 0) {
+            for (let table of joinTables) {
+                joinTableName = table.model.tableName
+                if (!dbRelations[mainTableName][joinTableName]) {
+                    msg = `Erreur modèle relationnel (table jointe ${joinTableName} absente des tables liées à la table ${mainTableName} : voir objet dbRelations)`
+                    throw new Error(msg)
+                }            
+            }
         }
     }
     catch(error: unknown) {
@@ -237,7 +239,7 @@ function stringAsInteger(str: unknown): boolean {
 }
 
 // Vérification qu'une variable string représente un booléen
-function stringAsBoolean(str: unknown): boolean {
+export function stringAsBoolean(str: unknown): boolean {
     if (typeof str !== 'string') return false
     return ['0','1','true','false'].includes(str.toLowerCase())
 }

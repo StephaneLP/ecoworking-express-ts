@@ -4,11 +4,11 @@
 // 2. Les valeurs reçues sont simples ou multiples (array ou string avec séparateur ',')
 // 3. La fonction trim() est appliquées, les valeurs vides sont supprimées
 
-type ObjReqQuery = {[key: string]: any}
-type ObjQuery = {[key: string]: string}
+import type { ReqQuery, ParsedQuery } from './definitions.ts'
+import { stringAsBoolean } from '../../orm/queries/validate.ts'
 
-export function parseQuery(obj: ObjReqQuery): ObjQuery {
-    const result: ObjQuery = {}
+export function parseQuery(obj: ReqQuery): ParsedQuery {
+    const result: ParsedQuery = {}
     let arrValue: string[] = []
 
     Object.entries(obj).forEach(([key, value]) => {
@@ -28,4 +28,26 @@ export function parseQuery(obj: ObjReqQuery): ObjQuery {
     })
 
     return result
+}
+
+export function setNestTables(query: ParsedQuery): boolean {
+    // Valeur par défaut : faux si DB_DEFAULT_NEST_FORMAT existe et est false ou 0, vrai autrement
+    const envParam = process.env.DB_DEFAULT_NEST_FORMAT
+    const defaultValue = !(!!envParam && stringAsBoolean(envParam) && (['false', '0'].includes(envParam)))
+
+
+    // const defaultValue = !process.env.DB_DEFAULT_NEST_FORMAT || !stringAsBoolean(process.env.DB_DEFAULT_NEST_FORMAT)
+
+
+    // let dbDefaultNesTables: string | undefined = process.env.DB_DEFAULT_NEST_FORMAT
+
+    // if (!dbDefaultNesTables) return true
+    // if (!stringAsBoolean(dbDefaultNesTables)) return true
+
+    // const nestTables = if(query.id)
+
+    // res = stringAsBoolean(dbDefaultNesTables)
+    // console.log(defaultNesTables, typeof defaultNesTables)
+
+    return true
 }

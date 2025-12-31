@@ -14,9 +14,7 @@ export async function runQuerySelect (params: Params): Promise<DbResult> {
         let checkParams: DbResult
 
         // Validation des liens de parenté entre les tables
-        if (params.joinTables && params.joinTables.length > 0) {
-            checkRelationShip(params.mainTable, params.joinTables)
-        }
+        checkRelationShip(params.mainTable, params.joinTables)
 
         // Validation des Paramètres (clause WHERE)
         if (params.where && params.where.length > 0) {
@@ -40,8 +38,7 @@ export async function runQuerySelect (params: Params): Promise<DbResult> {
         const sql: BuildQuery = buildQuerySelect(params)
 
         // Éxecution de la requête
-        conn = await pool.getConnection() 
-        // const result = await conn.query('SELECT 1 + 1 AS solution')
+        conn = await pool.getConnection()
         const result = await conn.query({nestTables: true, sql: sql.queryString}, sql.queryParams)
 
         // return {success: true, result: result}

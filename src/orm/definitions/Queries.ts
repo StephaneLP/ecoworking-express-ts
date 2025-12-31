@@ -29,9 +29,10 @@ export type OrderParams = Array<{
 
 export type Params = {
     mainTable: Table,
-    joinTables?: JoinTables,
-    where?: WhereParams,
-    order?: OrderParams
+    joinTables: JoinTables,
+    where: WhereParams,
+    order: OrderParams,
+    nestTables: boolean
 }
 
 export type DbResult = {

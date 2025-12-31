@@ -3,7 +3,7 @@ import type { Params } from '../orm/definitions.ts'
 import { op } from '../orm/db.ts'
 import { city } from '../models/city.model.ts'
 import { ecoworking } from '../models/ecoworking.model.ts'
-import { parseQuery } from './common/parse.ts'
+import { parseQuery, setNestTables } from './common/parse.ts'
 import { readRecords } from './common/crud.ts'
 import { sendError } from './common/result.ts'
 
@@ -14,11 +14,11 @@ READ / GET / SELECT
 export async function readCities (req: express.Request, res: express.Response): Promise<void> {
     try {
         const query = parseQuery(req.query)
-        const queryParams = {} as Params
+        const queryParams = {nestTables: setNestTables(query)} as Params
 
         // Tables
-        queryParams.mainTable = {model: city, columns: ['id', 'name', 'is_active']}
-        queryParams.joinTables = [{model: ecoworking, columns: ['name', 'is_active'], join: 'LEFT'}]
+        queryParams.mainTable = {model: city, columns: ['id', 'is_active']}
+        queryParams.joinTables = [{model: ecoworking, columns: ['name'], join: 'LEFT'}]
 
         // Clause WHERE
         queryParams.where = []
@@ -36,5 +36,3 @@ export async function readCities (req: express.Request, res: express.Response): 
         sendError(res, 500, 'Erreur Serveur', message)
     }
 }
-
-

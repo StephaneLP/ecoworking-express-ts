@@ -1,4 +1,5 @@
 import express from 'express'
+import type { Params, DbResult } from '../../orm/definitions.ts'
 import { logRequest, logError } from '../../utils/log.ts'
 // const {isParent, hasChildren} = require('../../config/db.params')
 
@@ -6,7 +7,16 @@ import { logRequest, logError } from '../../utils/log.ts'
 MISE EN FORME DE LA RÉPONSE DE LA REQUÊTE
 *********************************************************/
 
-// const formatResponse = (params, dbRes) => {
+export function formatResponse(params: Params, dbRes: DbResult) {
+    let msg: string
+    
+    try {
+
+    }
+    catch(error: unknown) {
+        msg = (error instanceof Error ? error.message : String(error)) + ' -> readRecords()'
+        throw new Error(msg)
+    }
 //     const mainTable = params.tables.mainTable
 //     const joinTables = params.tables.joinTables
 //     const mainTableName = mainTable[0].tableName
@@ -71,7 +81,7 @@ MISE EN FORME DE LA RÉPONSE DE LA REQUÊTE
 //     arrResult.forEach(line => delete line.buildKey)
 
 //     return arrResult
-// }
+}
 
 /*********************************************************
 REPONSES RETOURNÉES AU CLIENT - LOG DES REQUÊTES ET ERREURS
