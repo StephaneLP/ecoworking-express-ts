@@ -1,6 +1,6 @@
 import mariadb from 'mariadb'
 import type { Params, DbResult, BuildQuery } from '../definitions/Queries.ts'
-import { checkRelationShip, checkWhereParams, checkOrderParams } from './validate.ts'
+import { subCheckRelationShip, subCheckColumns, checkWhereParams, checkOrderParams } from './validate.ts'
 import { buildQuerySelect } from './build.ts'
 import { pool } from '../../config/db.init.ts'
 
@@ -8,13 +8,17 @@ import { pool } from '../../config/db.init.ts'
 ÉXÉCUTION REQUÊTE SELECT
 *********************************************************/
 
-export async function runQuerySelect (params: Params): Promise<DbResult> {
+export const runQuerySelect = async (params: Params): Promise<DbResult> => {
+// export async function runQuerySelect(params: Params): Promise<DbResult> {
     let conn 
     try {
         let checkParams: DbResult
 
         // Validation des liens de parenté entre les tables
-        checkRelationShip(params.mainTable, params.joinTables)
+        subCheckRelationShip(params.mainTable, params.joinTables)
+
+        // Validation des colonnes
+        subCheckColumns(params.mainTable, params.joinTables)
 
         // Validation des Paramètres (clause WHERE)
         if (params.where && params.where.length > 0) {
@@ -36,12 +40,10 @@ export async function runQuerySelect (params: Params): Promise<DbResult> {
 
         // Construction de la requête SQL
         const sql: BuildQuery = buildQuerySelect(params)
-
+// console.log('SQL', sql)
         // Éxecution de la requête
         conn = await pool.getConnection()
-        const result = await conn.query({nestTables: true, sql: sql.queryString}, sql.queryParams)
-
-        // return {success: true, result: result}
+        const result = await conn.query({nestTables: params.nestTables, sql: sql.queryString}, sql.queryParams)
 
         return {success: true, result: result}
     }

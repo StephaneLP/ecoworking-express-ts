@@ -127,20 +127,22 @@ CONSTRUCTION REQUÊTE DELETE
 CONSTRUCTION LISTE DES COLONNES (SELECT)
 *********************************************************/
 
-function buildColumnsList (params: Params): string[] {
+function buildColumnsList(params: Params): string[] {
     try {
         const mainTable = params.mainTable
         const joinTables = params.joinTables
         const arrColumns: string[] = []
+        let alias: string
 
         // Table principale
         const mainTableName = mainTable.model.tableName
         for (let column of mainTable.columns) {
-            arrColumns.push(`${mainTableName}.${column}`)
+            alias = (!params.nestTables ? ` AS '${mainTableName}.${column}'` : '')
+            arrColumns.push(`${mainTableName}.${column}${alias}`)
         }
 
         // Ajout de la clé primaire en tant que 'buildKey' pour la mise en forme JSON si tables enfants jointes    
-        if (joinTables && hasChildren(mainTable.model.tableName, joinTables)) {
+        if (params.nestTables && joinTables && hasChildren(mainTable.model.tableName, joinTables)) {
             const mainTablePK = getPKColumn(mainTable.model.tableColumns)
             arrColumns.push(`${mainTableName}.${mainTablePK} AS buildKey`)
         }
@@ -151,11 +153,12 @@ function buildColumnsList (params: Params): string[] {
                 const tableName = table.model.tableName
 
                 for (let column of table.columns) {
-                    arrColumns.push(`${tableName}.${column}`)
+                    alias = (!params.nestTables ? ` AS '${tableName}.${column}'` : '')
+                    arrColumns.push(`${tableName}.${column}${alias}`)
                 }
 
                 // Ajout de la clé primaire en tant que 'buildKey' pour la mise en forme JSON si tables enfants jointes
-                if (isParent(mainTable.model.tableName, table.model.tableName)) {
+                if (params.nestTables && isParent(mainTable.model.tableName, table.model.tableName)) {
                     const joinTablePK = getPKColumn(table.model.tableColumns)
                     arrColumns.push(`${tableName}.${joinTablePK} AS buildKey`)
                 }
@@ -168,7 +171,6 @@ function buildColumnsList (params: Params): string[] {
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildColumnsList()'
         throw new Error(message)
     }
-    
 }
 
 /*********************************************************
@@ -176,7 +178,7 @@ CONSTRUCTION CLAUSES
 *********************************************************/
 
 // Clause FROM
-function buildFromConditions (params: Params): string {
+function buildFromConditions(params: Params): string {
     try {
         const mainTable = params.mainTable
         const joinTables = params.joinTables
@@ -205,7 +207,7 @@ function buildFromConditions (params: Params): string {
 }
 
 // // Clause WHERE
-function buildWhereConditions (params: Params) {
+function buildWhereConditions(params: Params) {
     try {
         const arrConditions: string[] = []
         const arrParams: Array<string | number | boolean> = []

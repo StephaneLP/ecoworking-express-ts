@@ -1,7 +1,7 @@
 import type { TableName } from '../../config/db.tables.ts'
 import type { Table, JoinTables, WhereParams, OrderParams, DbResult } from '../definitions/Queries.ts'
 import type { DbRelations } from '../definitions.ts'
-import type { TableColumnsProperties } from '../definitions/Models.ts'
+import type { Model, TableColumnsProperties } from '../definitions/Models.ts'
 import {dbRelations, isParent, hasChildren} from '../db/db.relations.ts'
 
 /*********************************************************
@@ -9,7 +9,7 @@ VÉRIFICATION DES LIENS DE PARENTÉ ENTRE LES TABLES
 (REQUÊTES SELECT)
 *********************************************************/
 
-export function checkRelationShip(mainTable: Table, joinTables: JoinTables): void {
+export function subCheckRelationShip(mainTable: Table, joinTables: JoinTables): void {
     let msg: string, joinTableName: TableName
 
     try {
@@ -33,6 +33,57 @@ export function checkRelationShip(mainTable: Table, joinTables: JoinTables): voi
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkRelationShip()'
         throw new Error(message)
     }
+}
+
+/*********************************************************
+VÉRIFICATION DES LIENS DE PARENTÉ ENTRE LES TABLES
+(REQUÊTES SELECT)
+*********************************************************/
+
+export function subCheckColumns(mainTable: Table, joinTables: JoinTables): void {
+    let msg: string, modelColumns: string[], dateColumnList: string[]
+
+    try {
+        checkColumns(mainTable.model, mainTable.columns)
+
+        if (joinTables && joinTables.length > 0) {
+            for (let table of joinTables) {
+                checkColumns(table.model, table.columns)
+            }            
+        }
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkColumns()'
+        throw new Error(message)
+    }
+}
+
+function checkColumns(model: Model, columns: string[]): void {
+    let msg: string, modelColumns: string[], dateColumns: string[]
+
+    try {
+        modelColumns = [...Object.keys(model.tableColumns)]
+        if (model.dateColumns) {
+            dateColumns = Object.entries(model.dateColumns).map(e => e[1])
+            modelColumns = modelColumns.concat([...dateColumns])
+        }
+
+        if (columns[0] === '*' && columns.length === 1) {
+            columns.splice(0)
+            modelColumns.forEach(e => columns.push(e))
+        }
+
+        for (let column of columns) {
+            if (!modelColumns.includes(column)) {
+                msg = `Erreur main table : sélection des colonnes (colonne ${column} absente du modèle ${model.tableName})`
+                throw new Error(msg)
+            }
+        }
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkColumns()'
+        throw new Error(message)
+    }    
 }
 
 /*********************************************************
@@ -69,7 +120,7 @@ export function checkWhereParams(params: WhereParams): DbResult {
                         break
                     case 'string':
                         if (!constraints.length) {
-                            msg = `Erreur propriété length absente (colonne ${param.column} du modèle ${param.model.tableName}) -> checkWhereParams()`
+                            msg = `Erreur propriété length absente (colonne ${param.column} du modèle ${param.model.tableName})`
                             throw new Error(msg)
                         }
                         if (value.length > constraints.length) {

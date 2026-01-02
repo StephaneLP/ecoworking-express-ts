@@ -11,14 +11,14 @@ import { sendError } from './common/result.ts'
 READ / GET / SELECT
 *********************************************************/
 
-export async function readCities (req: express.Request, res: express.Response): Promise<void> {
+export async function readCities(req: express.Request, res: express.Response): Promise<void> {
     try {
         const query = parseQuery(req.query)
         const queryParams = {nestTables: setNestTables(query)} as Params
 
         // Tables
-        queryParams.mainTable = {model: city, columns: ['id', 'is_active']}
-        queryParams.joinTables = [{model: ecoworking, columns: ['name'], join: 'LEFT'}]
+        queryParams.mainTable = {model: city, columns: ['*']}
+        queryParams.joinTables = [{model: ecoworking, columns: ['*'], join: 'LEFT'}]
 
         // Clause WHERE
         queryParams.where = []

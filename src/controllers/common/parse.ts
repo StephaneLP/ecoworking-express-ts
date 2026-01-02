@@ -31,23 +31,15 @@ export function parseQuery(obj: ReqQuery): ParsedQuery {
 }
 
 export function setNestTables(query: ParsedQuery): boolean {
+    let response: boolean
+
     // Valeur par défaut : faux si DB_DEFAULT_NEST_FORMAT existe et est false ou 0, vrai autrement
     const envParam = process.env.DB_DEFAULT_NEST_FORMAT
-    const defaultValue = !(!!envParam && stringAsBoolean(envParam) && (['false', '0'].includes(envParam)))
+    const defaultValue = !(envParam && stringAsBoolean(envParam) && (['false', '0'].includes(envParam)))
 
+    // Valeur transmise par query params
+    const queryParam = query.nest_tables
+    if(queryParam && stringAsBoolean(queryParam)) return (['true', '1'].includes(queryParam) ? true : false)
 
-    // const defaultValue = !process.env.DB_DEFAULT_NEST_FORMAT || !stringAsBoolean(process.env.DB_DEFAULT_NEST_FORMAT)
-
-
-    // let dbDefaultNesTables: string | undefined = process.env.DB_DEFAULT_NEST_FORMAT
-
-    // if (!dbDefaultNesTables) return true
-    // if (!stringAsBoolean(dbDefaultNesTables)) return true
-
-    // const nestTables = if(query.id)
-
-    // res = stringAsBoolean(dbDefaultNesTables)
-    // console.log(defaultNesTables, typeof defaultNesTables)
-
-    return true
+    return defaultValue
 }
