@@ -14,7 +14,7 @@ export async function readRecords(res: express.Response, params: Params, calling
             return sendError(res, 400, 'Erreur Requête', msg)
         }
 
-        const formatDbRes: any = dbRes.result
+        const formatDbRes: any[] = formatResponse(params, dbRes.result)
         sendResult(res, 200, callingFunction, 'Requête exécutée avec succès', dbRes.result.length, formatDbRes)
 
         // const formatDbRes = Number(process.env.DB_RES_NEST_FORMAT) ? formatResponse(params, dbRes.result) : dbRes.result

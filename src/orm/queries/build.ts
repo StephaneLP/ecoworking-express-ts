@@ -125,6 +125,7 @@ CONSTRUCTION REQUÊTE DELETE
 
 /*********************************************************
 CONSTRUCTION LISTE DES COLONNES (SELECT)
+AJOUT D'UN ALIAS POUR LE RENDU DU RÉSULTAT QUAND NEST_TABLE = FALSE
 *********************************************************/
 
 function buildColumnsList(params: Params): string[] {
@@ -207,7 +208,7 @@ function buildFromConditions(params: Params): string {
 }
 
 // // Clause WHERE
-function buildWhereConditions(params: Params) {
+function buildWhereConditions(params: Params): {conditions: string[], params: (string | number | boolean)[]} {
     try {
         const arrConditions: string[] = []
         const arrParams: Array<string | number | boolean> = []

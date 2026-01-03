@@ -9,13 +9,13 @@ VÉRIFICATION DES LIENS DE PARENTÉ ENTRE LES TABLES
 (REQUÊTES SELECT)
 *********************************************************/
 
-export function subCheckRelationShip(mainTable: Table, joinTables: JoinTables): void {
+export function checkRelationShip(mainTable: Table, joinTables: JoinTables): void {
     let msg: string, joinTableName: TableName
 
     try {
         const mainTableName = mainTable.model.tableName
         if (!dbRelations[mainTableName]) {
-            msg = `Erreur modèle relationnel (table principale ${mainTableName} absente de l'initialisation du modèle relationnel : voir objet dbRelations)`
+            msg = `Modèle relationnel : table principale ${mainTableName} absente de l'objet dbRelations`
             throw new Error(msg)
         }
 
@@ -23,7 +23,7 @@ export function subCheckRelationShip(mainTable: Table, joinTables: JoinTables): 
             for (let table of joinTables) {
                 joinTableName = table.model.tableName
                 if (!dbRelations[mainTableName][joinTableName]) {
-                    msg = `Erreur modèle relationnel (table jointe ${joinTableName} absente des tables liées à la table ${mainTableName} : voir objet dbRelations)`
+                    msg = `Modèle relationnel : table jointe ${joinTableName} absente de l'objet dbRelations.${mainTableName}`
                     throw new Error(msg)
                 }            
             }
@@ -36,16 +36,17 @@ export function subCheckRelationShip(mainTable: Table, joinTables: JoinTables): 
 }
 
 /*********************************************************
-VÉRIFICATION DES LIENS DE PARENTÉ ENTRE LES TABLES
+VÉRIFICATION DE LA PRÉSENCE DES COLONNES DANS LE MODÈLE
+REMPLACEMENT DE * PAR LA LISTE DES COLONNES (-> CRÉATION ÉVENTUELLE D'UN ALIAS)
 (REQUÊTES SELECT)
 *********************************************************/
 
-export function subCheckColumns(mainTable: Table, joinTables: JoinTables): void {
-    let msg: string, modelColumns: string[], dateColumnList: string[]
-
+export function checkColumnsParams(mainTable: Table, joinTables: JoinTables): void {
     try {
+        // Main table
         checkColumns(mainTable.model, mainTable.columns)
 
+        // Join tables
         if (joinTables && joinTables.length > 0) {
             for (let table of joinTables) {
                 checkColumns(table.model, table.columns)
@@ -53,7 +54,7 @@ export function subCheckColumns(mainTable: Table, joinTables: JoinTables): void 
         }
     }
     catch(error: unknown) {
-        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkColumns()'
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkColumnsParams()'
         throw new Error(message)
     }
 }
@@ -75,7 +76,7 @@ function checkColumns(model: Model, columns: string[]): void {
 
         for (let column of columns) {
             if (!modelColumns.includes(column)) {
-                msg = `Erreur main table : sélection des colonnes (colonne ${column} absente du modèle ${model.tableName})`
+                msg = `Paramétrage queryParams.mainTable/joinTables : colonne renseignée incorrecte (colonne ${column} absente du modèle ${model.tableName})`
                 throw new Error(msg)
             }
         }
@@ -113,24 +114,24 @@ export function checkWhereParams(params: WhereParams): DbResult {
                 switch (constraints.type) {
                     case 'integer':
                         if (!stringAsInteger(value)) {
-                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type integer attendu -> checkWhereParams()`
+                            msg = `Paramètre ${param.column} de la chaine QueryString : type integer attendu (modèle ${param.model.tableName}) -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         param.values[i] = Number(value)
                         break
                     case 'string':
                         if (!constraints.length) {
-                            msg = `Erreur propriété length absente (colonne ${param.column} du modèle ${param.model.tableName})`
+                            msg = `Modèle ${param.model.tableName} : propriété length absente de définition de la colonne ${param.column} de type string`
                             throw new Error(msg)
                         }
                         if (value.length > constraints.length) {
-                            msg = `Erreur longueur (colonne ${param.column} du modèle ${param.model.tableName}) : string longueur max <= ${constraints.length} -> checkWhereParams()`
+                            msg = `Paramètre ${param.column} de la chaine QueryString : longueur > max authorisé (${value.length} > ${constraints.length}) (modèle ${param.model.tableName}) -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         break
                     case 'boolean':
                         if (!stringAsBoolean(value)) {
-                            msg = `Erreur type de donnée (colonne ${param.column} du modèle ${param.model.tableName}) : type boolean attendu -> checkWhereParams()`
+                            msg = `Paramètre ${param.column} de la chaine QueryString : type boolean attendu (modèle ${param.model.tableName}) -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         param.values[i] = (['1', 'true'].includes(value.toLowerCase()) ? 1 : 0)
@@ -158,7 +159,7 @@ export function checkOrderParams(params: OrderParams): DbResult {
     try {
         for (let condition of params) {
             if (!condition.model.tableColumns[condition.column]) {
-                msg = `Colonne de tri '${condition.column}' absente du modèle ${condition.model.tableName} -> checkOrderParams`
+                msg = `Paramètre de tri ${condition.column} de la chaine QueryString : colonne absente du modèle ${condition.model.tableName} -> checkOrderParams`
                 return {success: false, message: msg}
             }
             condition.dir = (condition.dir.toUpperCase() === 'ASC' ? 'ASC' : 'DESC')            
