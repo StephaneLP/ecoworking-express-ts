@@ -1,5 +1,5 @@
 // La fonction parseQuery() reçoit en paramètre l'objet Request.query, dont les valeurs
-// sont de type string|string[]|ParsedQs[]|ParsedQs[]|undfefined (typés comme any)
+// sont de type string|string[]|ParsedQs|ParsedQs[]|undfefined (typés comme any)
 // 1. Seules les valeurs de type string ou string[] sont retenues
 // 2. Les valeurs reçues sont simples ou multiples (array ou string avec séparateur ',')
 // 3. La fonction trim() est appliquées, les valeurs vides sont supprimées
@@ -7,16 +7,16 @@
 import type { ReqQuery, ParsedQuery } from './definitions.ts'
 import { stringAsBoolean } from '../../orm/queries/validate.ts'
 
-export function parseQuery(obj: ReqQuery): ParsedQuery {
+export function parseQuery(query: ReqQuery): ParsedQuery {
     const result: ParsedQuery = {}
     let arrValue: string[] = []
 
-    Object.entries(obj).forEach(([key, value]) => {
+    Object.entries(query).forEach(([key, value]) => {
         // Transforme les valeurs d'une clé en un tableau de valeurs distinctes (sans le séparateur ',')
         if (typeof value === 'string') arrValue = value.split(',')
         if (Array.isArray(value)) {
             value.forEach(e => {
-                arrValue = arrValue.concat(e.split(','))
+                if (typeof e === 'string') arrValue = arrValue.concat(e.split(','))
             })
         }
 

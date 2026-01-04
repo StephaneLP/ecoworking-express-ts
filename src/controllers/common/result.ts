@@ -24,54 +24,61 @@ export function formatResponse(params: Params, result: any) {
         let joinTableName: TableName, key: any, datas: any, lineTemp: any = {}
         
         // Initialisation de la pile contenant les données jointes (tables enfants) déjà ajoutées
-        for (let table of joinTables) {
-            if (isParent(mainTableName, table.model.tableName)) joinStack[table.model.tableName] = []
+        if (joinTables) {
+            for (let table of joinTables) {
+                if (isParent(mainTableName, table.model.tableName)) joinStack[table.model.tableName] = []
+            }            
         }
+
 
         for (let line of result) {
             // Récupération de la clé buildKey dans la réponse dbRes (undefined si absente)
             mainBuildKey = line[mainTableName].buildKey
 
-            // Les données de la mainTable ont déjà été ajoutée à la réponse
-            if (mainStack.includes(mainBuildKey)) {
-                // Parcours des données des tables jointes
-                for (let table of joinTables) {
-                    joinTableName = table.model.tableName
-                    joinBuildKey = line[joinTableName].buildKey
-
-                    // La table jointe est enfant et les données n'ont pas encore été ajoutées
-                    if (joinBuildKey && !joinStack[joinTableName].includes([mainBuildKey, joinBuildKey].join())) {
-                        key = arrResult.findIndex((el) => el['buildKey'] === mainBuildKey)
-                        lineTemp = {...line[joinTableName]}
-                        delete lineTemp.buildKey
-                        arrResult[key][joinTableName].push(lineTemp)
-                        joinStack[joinTableName].push([mainBuildKey, joinBuildKey].join())
-                        lineTemp = {}
-                    }
-                }
-            }
             // Les données de la mainTable n'ont pas encore été ajoutés à la réponse
-            else {
+            if (!mainStack.includes(mainBuildKey)) {
                 datas = {...line[mainTableName]}
                 if (mainBuildKey) mainStack.push(mainBuildKey)
 
                 // Parcours des données des tables jointes
-                for (let table of joinTables) {
-                    joinTableName = table.model.tableName
-                    joinBuildKey = line[joinTableName].buildKey
+                if (joinTables) {
+                    for (let table of joinTables) {
+                        joinTableName = table.model.tableName
+                        joinBuildKey = line[joinTableName].buildKey
 
-                    if (joinBuildKey === null) continue
-                    if (!isParent(mainTableName, joinTableName)) {
-                        datas[joinTableName] = {...line[joinTableName]}
-                    }
-                    else {
-                        datas[joinTableName] = [{...line[joinTableName]}]
-                        joinStack[joinTableName].push([mainBuildKey, joinBuildKey].join())
-                        delete datas[joinTableName][0].buildKey
+                        if (joinBuildKey === null) continue
+                        if (!isParent(mainTableName, joinTableName)) {
+                            datas[joinTableName] = {...line[joinTableName]}
+                        }
+                        else {
+                            datas[joinTableName] = [{...line[joinTableName]}]
+                            joinStack[joinTableName].push([mainBuildKey, joinBuildKey].join())
+                            delete datas[joinTableName][0].buildKey
+                        }
                     }
                 }
 
                 arrResult.push(datas)
+            }
+            // Les données de la mainTable ont déjà été ajoutée à la réponse
+            else {
+                // Parcours des données des tables jointes
+                if (joinTables) {
+                    for (let table of joinTables) {
+                        joinTableName = table.model.tableName
+                        joinBuildKey = line[joinTableName].buildKey
+
+                        // La table jointe est enfant et les données n'ont pas encore été ajoutées
+                        if (joinBuildKey && !joinStack[joinTableName].includes([mainBuildKey, joinBuildKey].join())) {
+                            key = arrResult.findIndex((el) => el['buildKey'] === mainBuildKey)
+                            lineTemp = {...line[joinTableName]}
+                            delete lineTemp.buildKey
+                            arrResult[key][joinTableName].push(lineTemp)
+                            joinStack[joinTableName].push([mainBuildKey, joinBuildKey].join())
+                            lineTemp = {}
+                        }
+                    }
+                }
             }
             datas = {}
         }
