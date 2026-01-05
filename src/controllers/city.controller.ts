@@ -4,7 +4,7 @@ import { op } from '../orm/db.ts'
 import { city } from '../models/city.model.ts'
 import { ecoworking } from '../models/ecoworking.model.ts'
 import { parseQuery, setNestTables } from './common/parse.ts'
-import { readRecords } from './common/crud.ts'
+import { readRecords, readRecordsById } from './common/crud.ts'
 import { sendError } from './common/result.ts'
 
 /*********************************************************
@@ -15,7 +15,7 @@ export async function readCities(req: express.Request, res: express.Response): P
     try {
         const query = parseQuery(req.query)
         const params = {nestTables: setNestTables(query)} as Params
-
+        console.log(query)
         // Tables
         params.mainTable = {model: city, columns: ['*']}
         params.joinTables = [{model: ecoworking, columns: ['*'], join: 'LEFT'}]
@@ -59,11 +59,18 @@ export async function readCityList(req: express.Request, res: express.Response):
     }
 }
 
-export function readCityById(req: express.Request, res: express.Response): Promise<void> {
+export async function readCityById(req: express.Request, res: express.Response): Promise<void> {
     try {
         const query = parseQuery(req.query)
         const params = {nestTables: setNestTables(query)} as Params
 
+        const uriParams = parseQuery(req.params)
+        params.uriParams = [{model: city, column: 'id', op: op.equal, value: uriParams.id}]
+
+        // Tables
+        params.mainTable = {model: city, columns: ['*']}
+
+        await readRecordsById(res, params, 'readCityById')
     }
     catch(error: unknown) {
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readCities()'

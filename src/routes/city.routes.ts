@@ -1,7 +1,7 @@
 // const express = require('express')
 import express from 'express'
 const router = express.Router()
-import { readCities, readCityList } from '../controllers/city.controller.ts'
+import { readCities, readCityList, readCityById } from '../controllers/city.controller.ts'
 // const {authenticate, authorize} = require('../middlewares/protect')
 
 router.route('/')
@@ -11,9 +11,9 @@ router.route('/')
 router.route('/liste/')
     .get(readCityList)
 
-// router.route('/:id')    
+router.route('/:id')    
+    .get(readCityById)
 //     .get(authenticate, authorize(['superadmin','admin']), cityController.readCityById)
-//     // .get(cityController.readCityById)
 //     .delete(cityController.deleteCityById)
 //     .put(cityController.updateCityById)
 

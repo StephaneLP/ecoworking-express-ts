@@ -20,13 +20,13 @@ export function parseQuery(query: ReqQuery): ParsedQuery {
             })
         }
 
-        // Retire les valeurs vides. Un tableau vide n'est pas ajouté
-        arrValue = arrValue.filter(e => e.trim() !== '')
-        if (arrValue.length > 0) result[key] = arrValue.join()
+        // Applique la fonction trim() puis retire les valeurs vides (un tableau vide n'est pas ajouté)
+        arrValue = arrValue.map(e => e.trim())
+        arrValue = arrValue.filter(e => e !== '')
 
+        if (arrValue.length > 0) result[key] = arrValue.join()
         arrValue = []
     })
-
     return result
 }
 

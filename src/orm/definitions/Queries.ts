@@ -13,6 +13,13 @@ export type JoinTables = Array<{
     join: JoinType
 }>
 
+export type UriParams = Array<{
+    model: Model, 
+    column: string, 
+    op: string, 
+    value: string | number
+}> 
+
 export type WhereParams = Array<{
     model: Model, 
     column: string, 
@@ -30,6 +37,7 @@ export type OrderParams = Array<{
 export type Params = {
     mainTable: Table,
     joinTables: JoinTables,
+    uriParams: UriParams,
     where: WhereParams,
     order: OrderParams,
     nestTables: boolean
