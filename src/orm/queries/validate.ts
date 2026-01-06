@@ -63,6 +63,11 @@ function checkColumns(model: Model, columns: string[]): void {
     let msg: string, modelColumns: string[], dateColumns: string[]
 
     try {
+        if (columns.length === 0) {
+            msg = `Paramétrage queryParams.mainTable/joinTables : aucune colonne n'est renseignée (modèle ${model.tableName})`
+            throw new Error(msg)
+        }
+
         modelColumns = [...Object.keys(model.tableColumns)]
         if (model.dateColumns) {
             dateColumns = Object.entries(model.dateColumns).map(e => e[1])

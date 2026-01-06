@@ -115,13 +115,20 @@ CONSTRUCTION REQUÊTE UPDATE
 CONSTRUCTION REQUÊTE DELETE
 *********************************************************/
 
-// const sqlDeleteById = (params) =>  {
-//     const URIParam = params.URIParam
-//     const arrParams = [URIParam[3]]
-//     const sqlWhereClause = ` WHERE ${URIParam[1]} ${URIParam[2]} ?`
+export function buildQueryDeleteById(params: Params): BuildQuery {
+    try {
+        // WHERE : liste des conditions et tableau des valeurs
+        const whereConditions = buildWhereConditions(params)
+        const queryWHERE = ` WHERE ${whereConditions.conditions[0]}`
+        const queryParams = whereConditions.params
 
-//     return {reqString: `DELETE FROM ${params.table.tableName}${sqlWhereClause}`, reqParams: arrParams}
-// }
+        return {queryString: `DELETE FROM ${params.where[0].model.tableName}${queryWHERE}`, queryParams: queryParams}
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildQueryDeleteById()'
+        throw new Error(message)
+    }
+}
 
 /*********************************************************
 CONSTRUCTION LISTE DES COLONNES (SELECT)

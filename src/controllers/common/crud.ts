@@ -1,16 +1,20 @@
 import express from 'express'
 import type { Params } from '../../orm/definitions.ts'
+import * as queries from '../../orm/queries.ts'
 import { sendResult, sendError, formatResponse } from './result.ts'
-import { runQuerySelect } from '../../orm/queries.ts'
+
+/*********************************************************
+READ
+*********************************************************/
 
 export async function readRecords(res: express.Response, params: Params, callingFunction: string): Promise<void> {
     let msg: string
     
     try {
-        const dbRes = await runQuerySelect(params)
+        const dbRes = await queries.runQuerySelect(params)
 
         if (!dbRes.success) {
-            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') +  ' -> readRecords()'
+            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') + ' -> readRecords()'
             return sendError(res, 400, 'Erreur Requête', msg)
         }
 
@@ -27,11 +31,15 @@ export async function readRecordsById(res: express.Response, params: Params, cal
     let msg: string
     
     try {
-        const dbRes = await runQuerySelect(params)
+        const dbRes = await queries.runQuerySelect(params)
 
         if (!dbRes.success) {
-            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') +  ' -> readRecordsById()'
+            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') + ' -> readRecordsById()'
             return sendError(res, 400, 'Erreur Requête', msg)
+        }
+
+        if (dbRes.result.length ===0) {
+            return sendError(res, 404, 'Aucun résultat n\'a été trouvé pour cet Id', 'La requête a retourné un tableau vide')            
         }
 
         const formatDbRes: any[] = formatResponse(params, dbRes.result)
@@ -39,6 +47,42 @@ export async function readRecordsById(res: express.Response, params: Params, cal
     }
     catch(error: unknown) {
         msg = (error instanceof Error ? error.message : String(error)) + ' -> readRecordsById()'
+        throw new Error(msg)
+    }
+}
+
+/*********************************************************
+CREATE
+*********************************************************/
+
+/*********************************************************
+UPDATE
+*********************************************************/
+
+/*********************************************************
+DELETE
+*********************************************************/
+
+export async function deleteRecordById(res: express.Response, params: Params, callingFunction: string): Promise<void> {
+    let msg: string
+    
+    try {
+        const dbRes = await queries.runQueryDeleteById(params)
+
+        if (!dbRes.success) {
+            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') + ' -> deleteRecordById()'
+            return sendError(res, 400, 'Erreur Requête', msg)
+        }
+
+        if (dbRes.result.affectedRows === 0) {
+            msg = `La ligne n'a pas pu être supprimée, (id: ${params.where[0].values[0]})` + ' -> deleteRecordById()'
+            return sendError(res, 404, 'Erreur Requête', msg)
+        }
+
+        sendResult(res, 200, callingFunction, `${dbRes.result.affectedRows} ligne(s) supprimée(s)`, dbRes.result.affectedRows, [])
+    }
+    catch(error: unknown) {
+        msg = (error instanceof Error ? error.message : String(error)) + ' -> deleteRecordById()'
         throw new Error(msg)
     }
 }

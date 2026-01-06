@@ -3,8 +3,8 @@ import type { Params } from '../orm/definitions.ts'
 import { op } from '../orm/db.ts'
 import { city } from '../models/city.model.ts'
 import { ecoworking } from '../models/ecoworking.model.ts'
-import { parseQuery, setNestTables } from './common/parse.ts'
-import { readRecords, readRecordsById } from './common/crud.ts'
+import { parseRequestParams, setNestTables } from './common/parse.ts'
+import * as crud from './common/crud.ts'
 import { sendError } from './common/result.ts'
 
 /*********************************************************
@@ -13,9 +13,9 @@ READ / GET / SELECT
 
 export async function readCities(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parseQuery(req.query)
+        const query = parseRequestParams(req.query)
         const params = {nestTables: setNestTables(query)} as Params
-        console.log(query)
+
         // Tables
         params.mainTable = {model: city, columns: ['*']}
         params.joinTables = [{model: ecoworking, columns: ['*'], join: 'LEFT'}]
@@ -29,7 +29,7 @@ export async function readCities(req: express.Request, res: express.Response): P
         // Clause ORDER BY
         params.order = [{model: city, column: query.col || 'name', dir: query.dir || 'ASC'}]
 
-        await readRecords(res, params, 'readCities')        
+        await crud.readRecords(res, params, 'readCities')        
     }
     catch(error: unknown) {
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readCities()'
@@ -39,7 +39,7 @@ export async function readCities(req: express.Request, res: express.Response): P
 
 export async function readCityList(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parseQuery(req.query)
+        const query = parseRequestParams(req.query)
         const params = {nestTables: setNestTables(query)} as Params
 
         // Tables
@@ -51,7 +51,7 @@ export async function readCityList(req: express.Request, res: express.Response):
         // Clause ORDER BY
         params.order = [{model: city, column: 'name', dir: 'ASC'}]
 
-        await readRecords(res, params, 'readCityList')        
+        await crud.readRecords(res, params, 'readCityList')        
     }
     catch(error: unknown) {
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readCityList()'
@@ -61,19 +61,56 @@ export async function readCityList(req: express.Request, res: express.Response):
 
 export async function readCityById(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parseQuery(req.query)
+        const query = parseRequestParams(req.query)
+        const uriParams = parseRequestParams(req.params)
         const params = {nestTables: setNestTables(query)} as Params
-
-        const uriParams = parseQuery(req.params)
-        params.uriParams = [{model: city, column: 'id', op: op.equal, value: uriParams.id}]
 
         // Tables
         params.mainTable = {model: city, columns: ['*']}
 
-        await readRecordsById(res, params, 'readCityById')
+        // Clause WHERE
+        params.where = [{model: city, column: 'id', op: op.equal, values: [uriParams.id]}]
+
+        await crud.readRecordsById(res, params, 'readCityById')
     }
     catch(error: unknown) {
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readCities()'
+        sendError(res, 500, 'Erreur Serveur', message)
+    }
+}
+
+/*********************************************************
+CREATE / POST / INSERT INTO
+*********************************************************/
+
+export async function createCity(req: express.Request, res: express.Response): Promise<void> {
+    console.log('CREATE')
+}
+
+/*********************************************************
+UPDATE / PUT / INSERT INTO
+*********************************************************/
+
+export async function updateCityById(req: express.Request, res: express.Response): Promise<void> {
+    console.log('UPDATE BY ID')
+}
+
+/*********************************************************
+DELETE / DELETE / DELETE
+*********************************************************/
+
+export async function deleteCityById(req: express.Request, res: express.Response): Promise<void> {
+    try {
+        const uriParams = parseRequestParams(req.params)
+        const params = {} as Params
+
+        // Clause WHERE
+        params.where = [{model: city, column: 'id', op: op.equal, values: [uriParams.id]}]
+        
+        await crud.deleteRecordById(res, params, 'deleteCityById()')
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> deleteCityById()'
         sendError(res, 500, 'Erreur Serveur', message)
     }
 }

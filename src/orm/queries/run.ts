@@ -1,7 +1,7 @@
 import mariadb from 'mariadb'
 import type { Params, DbResult, BuildQuery } from '../definitions/Queries.ts'
 import { checkRelationShip, checkColumnsParams, checkWhereParams, checkOrderParams } from './validate.ts'
-import { buildQuerySelect } from './build.ts'
+import { buildQuerySelect, buildQueryDeleteById } from './build.ts'
 import { pool } from '../../config/db.init.ts'
 
 /*********************************************************
@@ -54,3 +54,51 @@ export async function runQuerySelect(params: Params): Promise<DbResult> {
         if (conn) conn.end()
     }
 }
+
+/*********************************************************
+ÉXÉCUTION REQUÊTE INSERT INTO
+*********************************************************/
+
+/*********************************************************
+ÉXÉCUTION REQUÊTE UPDATE
+*********************************************************/
+
+/*********************************************************
+ÉXÉCUTION REQUÊTE DELETE
+*********************************************************/
+
+export async function runQueryDeleteById(params: Params): Promise<DbResult> {
+    let conn 
+    try {
+        let checkParams: DbResult
+
+        // Validation des Paramètres (clause WHERE)
+        if (!params.where || params.where.length === 0) {
+            throw new Error(`Paramétrage de la fonction delete : clause Where absente (params.where non renseigné)`)
+        }
+        
+        checkParams = checkWhereParams(params.where)
+        if (!checkParams.success) {
+            checkParams.message += ' -> runQueryDeleteById()'
+            return checkParams
+        }
+        
+        // Construction de la requête SQL
+        const sql: BuildQuery = buildQueryDeleteById(params)
+
+        // Éxecution de la requête
+        conn = await pool.getConnection()
+        const result = await conn.query(sql.queryString, sql.queryParams)
+
+        return {success: true, result: result}
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> runQueryDeleteById()'
+        throw new Error(message)
+    }
+    finally {
+        if (conn) conn.end()
+    }
+}
+
+

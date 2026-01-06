@@ -7,7 +7,7 @@
 import type { ReqQuery, ParsedQuery } from './definitions.ts'
 import { stringAsBoolean } from '../../orm/queries/validate.ts'
 
-export function parseQuery(query: ReqQuery): ParsedQuery {
+export function parseRequestParams(query: ReqQuery): ParsedQuery {
     const result: ParsedQuery = {}
     let arrValue: string[] = []
 
