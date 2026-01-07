@@ -1,14 +1,18 @@
-// La fonction parseQuery() reçoit en paramètre l'objet Request.query, dont les valeurs
+import express from 'express'
+import { stringAsBoolean } from '../../orm/queries/validate.ts'
+import { sendError } from './result.ts'
+
+type IncomingRequest = {[key: string]: any}
+type ParsedRequest = {[key: string]: string}
+
+// La fonction parseQueryParams() reçoit en paramètre l'objet Request.query, dont les valeurs
 // sont de type string|string[]|ParsedQs|ParsedQs[]|undfefined (typés comme any)
 // 1. Seules les valeurs de type string ou string[] sont retenues
 // 2. Les valeurs reçues sont simples ou multiples (array ou string avec séparateur ',')
 // 3. La fonction trim() est appliquées, les valeurs vides sont supprimées
 
-import type { ReqQuery, ParsedQuery } from './definitions.ts'
-import { stringAsBoolean } from '../../orm/queries/validate.ts'
-
-export function parseRequestParams(query: ReqQuery): ParsedQuery {
-    const result: ParsedQuery = {}
+export function parseQueryParams(query: IncomingRequest): ParsedRequest {
+    const result: ParsedRequest = {}
     let arrValue: string[] = []
 
     Object.entries(query).forEach(([key, value]) => {
@@ -27,10 +31,28 @@ export function parseRequestParams(query: ReqQuery): ParsedQuery {
         if (arrValue.length > 0) result[key] = arrValue.join()
         arrValue = []
     })
+
     return result
 }
 
-export function setNestTables(query: ParsedQuery): boolean {
+export function parseUriParams(uri: IncomingRequest): ParsedRequest {
+        const result: ParsedRequest = {}
+
+        for (let key in uri) {
+            result[key] = (typeof uri[key] === 'string' ? uri[key].trim() : uri[key])
+        }
+
+        return result
+}
+
+
+// export function parseBodyParams(body: IncomingRequest): ParsedRequest {
+//     const result: ParsedRequest = {}
+
+
+// }
+
+export function setNestTables(query: ParsedRequest): boolean {
     let response: boolean
 
     // Valeur par défaut : faux si DB_DEFAULT_NEST_FORMAT existe et est false ou 0, vrai autrement

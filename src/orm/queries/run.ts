@@ -1,7 +1,8 @@
-import mariadb from 'mariadb'
 import type { Params, DbResult, BuildQuery } from '../definitions/Queries.ts'
-import { checkRelationShip, checkColumnsParams, checkWhereParams, checkOrderParams } from './validate.ts'
-import { buildQuerySelect, buildQueryDeleteById } from './build.ts'
+
+import mariadb from 'mariadb'
+import * as validate from './validate.ts'
+import * as build from './build.ts'
 import { pool } from '../../config/db.init.ts'
 
 /*********************************************************
@@ -14,14 +15,14 @@ export async function runQuerySelect(params: Params): Promise<DbResult> {
         let checkParams: DbResult
 
         // Validation des liens de parenté entre les tables
-        checkRelationShip(params.mainTable, params.joinTables)
+        validate.checkRelationShip(params.mainTable, params.joinTables)
 
         // Validation des colonnes
-        checkColumnsParams(params.mainTable, params.joinTables)
+        validate.checkColumnsParams(params.mainTable, params.joinTables)
 
         // Validation des Paramètres (clause WHERE)
         if (params.where && params.where.length > 0) {
-            checkParams = checkWhereParams(params.where)
+            checkParams = validate.checkWhereParams(params.where)
             if (!checkParams.success) {
                 checkParams.message += ' -> runQuerySelect()'
                 return checkParams
@@ -30,7 +31,7 @@ export async function runQuerySelect(params: Params): Promise<DbResult> {
 
         // Validation du tri (clause ORDER)
         if (params.order && params.order.length > 0) {
-            checkParams = checkOrderParams(params.order)
+            checkParams = validate.checkOrderParams(params.order)
             if (!checkParams.success) {
                 checkParams.message += ' -> runQuerySelect()'
                 return checkParams
@@ -38,7 +39,7 @@ export async function runQuerySelect(params: Params): Promise<DbResult> {
         }
 
         // Construction de la requête SQL
-        const sql: BuildQuery = buildQuerySelect(params)
+        const sql: BuildQuery = build.buildQuerySelect(params)
 
         // Éxecution de la requête
         conn = await pool.getConnection()
@@ -77,14 +78,14 @@ export async function runQueryDeleteById(params: Params): Promise<DbResult> {
             throw new Error(`Paramétrage de la fonction delete : clause Where absente (params.where non renseigné)`)
         }
         
-        checkParams = checkWhereParams(params.where)
+        checkParams = validate.checkWhereParams(params.where)
         if (!checkParams.success) {
             checkParams.message += ' -> runQueryDeleteById()'
             return checkParams
         }
         
         // Construction de la requête SQL
-        const sql: BuildQuery = buildQueryDeleteById(params)
+        const sql: BuildQuery = build.buildQueryDeleteById(params)
 
         // Éxecution de la requête
         conn = await pool.getConnection()

@@ -119,7 +119,7 @@ export function checkWhereParams(params: WhereParams): DbResult {
                 switch (constraints.type) {
                     case 'integer':
                         if (!stringAsInteger(value)) {
-                            msg = `Paramètre ${param.column} de la chaine QueryString : type integer attendu (modèle ${param.model.tableName}) -> checkWhereParams()`
+                            msg = `Paramètre ${param.column}=${value} : type integer attendu (modèle ${param.model.tableName}) -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         param.values[i] = Number(value)
@@ -129,14 +129,18 @@ export function checkWhereParams(params: WhereParams): DbResult {
                             msg = `Modèle ${param.model.tableName} : propriété length absente de définition de la colonne ${param.column} de type string`
                             throw new Error(msg)
                         }
+                        if (value === '') {
+                            msg = `Paramètre ${param.column}=${value} : valeur vide (modèle ${param.model.tableName}) -> checkWhereParams()`
+                            return {success: false, message: msg}
+                        }
                         if (value.length > constraints.length) {
-                            msg = `Paramètre ${param.column} de la chaine QueryString : longueur > max authorisé (${value.length} > ${constraints.length}) (modèle ${param.model.tableName}) -> checkWhereParams()`
+                            msg = `Paramètre ${param.column}=${value} : longueur > max authorisé (${constraints.length}) (modèle ${param.model.tableName}) -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         break
                     case 'boolean':
                         if (!stringAsBoolean(value)) {
-                            msg = `Paramètre ${param.column} de la chaine QueryString : type boolean attendu (modèle ${param.model.tableName}) -> checkWhereParams()`
+                            msg = `Paramètre ${param.column}=${value} : type boolean attendu (modèle ${param.model.tableName}) -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
                         param.values[i] = (['1', 'true'].includes(value.toLowerCase()) ? 1 : 0)
@@ -188,35 +192,58 @@ VÉRIFICATION DES DONNÉES : REQUÊTES CREATE, UPDATE & DELETE
 (1 TABLE DANS LA CLAUSE SQL FROM)
 *********************************************************/
 
-// // Paramètre reçu via l'url (URI PARAM)
-// const checkURIParam = (params) => {
-//     const URIParam = params.URIParam
-
-//     if (!URIParam[3]) {
-//         return {success: false, msg: 'La chaîne URIParameter est vide'}
-//     }
+// Paramètre reçu via l'url (URI PARAM)
+// export function checkURIParam (params: WhereParams): DbResult {
+//     let msg: string
+    
 //     try {
-//         const constraints = URIParam[0].tableColumns[URIParam[1]]
-//         const dataType = constraints.type
+//         let constraints: TableColumnsProperties, value: string | number | boolean
 
-//         switch (dataType) {
-//             case 'integer':
-//                 if (!stringAsInteger(URIParam[3])) {
-//                     return {success: false, functionName: 'validate.checkURIParam', msg: `Erreur type de donnée (colonne '${URIParam[1]}', type 'integer' attendu)`}
+//         for (let param of params) {
+//             constraints = param.model.tableColumns[param.column]
+
+//             if(!constraints) {
+//                 msg = `Colonne ${param.column} absente du modèle ${param.model.tableName}`
+//                 throw new Error(msg)
+//             }
+
+//             for (let i in param.values) {
+//                 value = param.values[i]
+
+//                 if (!value) {
+//                     msg = `Paramètre ${param.column} transmis par l'URL : valeur vide -> checkURIParam()`
+//                     return {success: false, message: msg}                  
 //                 }
-//                 URIParam[3] = Number(URIParam[3])
-//                 break
-//             case 'string':
-//                 if (URIParam[3].length > constraints.length) {
-//                     return {success: false, functionName: 'validate.checkURIParam', msg: `Erreur longueur (colonne '${URIParam[1]}', longueur max : ${constraints.length})`}
+
+//                 if (typeof value !== 'string') continue
+
+//                 switch (constraints.type) {
+//                     case 'integer':
+//                         if (!stringAsInteger(value)) {
+//                             msg = `Paramètre ${param.column} de la chaine UriString : type integer attendu (modèle ${param.model.tableName}) -> checkURIParam()`
+//                             return {success: false, message: msg}
+//                         }
+//                         param.values[i] = Number(value)
+//                         break
+//                     case 'string':
+//                         if (!constraints.length) {
+//                             msg = `Modèle ${param.model.tableName} : propriété length absente de définition de la colonne ${param.column} de type string`
+//                             throw new Error(msg)
+//                         }
+//                         if (value.length > constraints.length) {
+//                             msg = `Paramètre ${param.column} de la chaine QueryString : longueur > max authorisé (${value.length} > ${constraints.length}) (modèle ${param.model.tableName}) -> checkURIParam()`
+//                             return {success: false, message: msg}
+//                         }
+//                         break
 //                 }
-//                 break
+//             }
 //         }
-
+        
 //         return {success: true}
 //     }
-//     catch(err) {
-//         throw new Error(`validate.checkURIParam - ${err.name} (${err.message})`)
+//     catch(error: unknown) {
+//         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> checkURIParam()'
+//         throw new Error(message)
 //     }
 // }
 
@@ -288,7 +315,7 @@ OUTILS
 function stringAsInteger(str: unknown): boolean {
     const numbers = ['0','1','2','3','4','5','6','7','8','9']
 
-    if (typeof str !== 'string') return false
+    if (typeof str !== 'string' || str === '') return false
     for (let el of str) {
         if (!numbers.includes(el)) return false
     }

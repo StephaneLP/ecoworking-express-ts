@@ -11,7 +11,7 @@ router.route('/')
 router.route('/liste/')
     .get(cityController.readCityList)
 
-router.route('/:id')    
+router.route('/:id/:id2')    
     .get(cityController.readCityById)
 //     .get(authenticate, authorize(['superadmin','admin']), cityController.readCityById)
     .put(cityController.updateCityById)
