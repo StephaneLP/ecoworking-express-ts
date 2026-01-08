@@ -35,7 +35,7 @@ export function parseQueryParams(query: IncomingRequest): ParsedRequest {
     return result
 }
 
-export function parseUriParams(uri: IncomingRequest): ParsedRequest {
+export function parseParams(uri: IncomingRequest): ParsedRequest {
         const result: ParsedRequest = {}
 
         for (let key in uri) {
@@ -44,13 +44,6 @@ export function parseUriParams(uri: IncomingRequest): ParsedRequest {
 
         return result
 }
-
-
-// export function parseBodyParams(body: IncomingRequest): ParsedRequest {
-//     const result: ParsedRequest = {}
-
-
-// }
 
 export function setNestTables(query: ParsedRequest): boolean {
     let response: boolean

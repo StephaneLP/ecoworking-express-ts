@@ -5,7 +5,7 @@ import { city } from '../models/city.model.ts'
 import { ecoworking } from '../models/ecoworking.model.ts'
 import { op } from '../orm/db.ts'
 import { sendError } from './common/result.ts'
-import * as parse from './common/parse.ts'
+import { parseQueryParams, parseParams, setNestTables} from './common/parse.ts'
 import * as crud from './common/crud.ts'
 
 /*********************************************************
@@ -14,8 +14,8 @@ READ / GET / SELECT
 
 export async function readCities(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parse.parseQueryParams(req.query)
-        const params = {nestTables: parse.setNestTables(query)} as Params
+        const query = parseQueryParams(req.query)
+        const params = {nestTables: setNestTables(query)} as Params
 
         // Tables
         params.mainTable = {model: city, columns: ['*']}
@@ -40,8 +40,8 @@ export async function readCities(req: express.Request, res: express.Response): P
 
 export async function readCityList(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parse.parseQueryParams(req.query)
-        const params = {nestTables: parse.setNestTables(query)} as Params
+        const query = parseQueryParams(req.query)
+        const params = {nestTables: setNestTables(query)} as Params
 
         // Tables
         params.mainTable = {model: city, columns: ['name']}
@@ -62,9 +62,9 @@ export async function readCityList(req: express.Request, res: express.Response):
 
 export async function readCityById(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parse.parseQueryParams(req.query)
-        const uriParams = parse.parseUriParams(req.params)
-        const params = {nestTables: parse.setNestTables(query)} as Params
+        const query = parseQueryParams(req.query)
+        const uriParams = parseParams(req.params)
+        const params = {nestTables: setNestTables(query)} as Params
 
         // Tables
         params.mainTable = {model: city, columns: ['*']}
@@ -86,7 +86,7 @@ CREATE / POST / INSERT INTO
 
 export async function createCity(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parse.parseQueryParams(req.body)
+        const query = parseParams(req.body)
         const params = {} as Params
 
         console.log('CREATE :', req.body)
@@ -111,7 +111,7 @@ DELETE / DELETE / DELETE
 
 export async function deleteCityById(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const uriParams = parse.parseUriParams(req.params)
+        const uriParams = parseParams(req.params)
         const params = {} as Params
 
         // Clause WHERE
