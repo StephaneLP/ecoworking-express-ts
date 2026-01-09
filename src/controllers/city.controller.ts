@@ -5,7 +5,7 @@ import { city } from '../models/city.model.ts'
 import { ecoworking } from '../models/ecoworking.model.ts'
 import { op } from '../orm/db.ts'
 import { sendError } from './common/result.ts'
-import { parseQueryParams, parseParams, setNestTables} from './common/parse.ts'
+import { parseQueryParams, parseUriParams, parseBodyParams, setNestTables} from './common/parse.ts'
 import * as crud from './common/crud.ts'
 
 /*********************************************************
@@ -63,7 +63,7 @@ export async function readCityList(req: express.Request, res: express.Response):
 export async function readCityById(req: express.Request, res: express.Response): Promise<void> {
     try {
         const query = parseQueryParams(req.query)
-        const uriParams = parseParams(req.params)
+        const uriParams = parseUriParams(req.params)
         const params = {nestTables: setNestTables(query)} as Params
 
         // Tables
@@ -86,10 +86,13 @@ CREATE / POST / INSERT INTO
 
 export async function createCity(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const query = parseParams(req.body)
+        const body = parseBodyParams(req.body)
         const params = {} as Params
 
-        console.log('CREATE :', req.body)
+        params.model = city
+        params.body = body
+
+        await crud.createRecord(res, params, 'readCityById')
     }
     catch(error: unknown) {
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> createCity()'
@@ -111,7 +114,7 @@ DELETE / DELETE / DELETE
 
 export async function deleteCityById(req: express.Request, res: express.Response): Promise<void> {
     try {
-        const uriParams = parseParams(req.params)
+        const uriParams = parseUriParams(req.params)
         const params = {} as Params
 
         // Clause WHERE

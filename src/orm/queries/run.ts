@@ -60,6 +60,32 @@ export async function runQuerySelect(params: Params): Promise<DbResult> {
 ÉXÉCUTION REQUÊTE INSERT INTO
 *********************************************************/
 
+export async function runQueryInsert(params: Params): Promise<DbResult> {
+    let conn 
+    try {
+
+        // Validation des données (body)
+        const check = validate.checkBodyParams(params)
+        if (!check.success) return check
+
+        // Construction de la requête SQL
+        const sql: BuildQuery = build.buildQueryInsert(params)
+
+        // Éxecution de la requête
+        conn = await pool.getConnection()
+        const result = await conn.query(sql.queryString, sql.queryParams)
+
+        return {success: true, result: result}
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> runQueryInsert()'
+        throw new Error(message)
+    }
+    finally {
+        if (conn) conn.end()
+    }
+}
+
 /*********************************************************
 ÉXÉCUTION REQUÊTE UPDATE
 *********************************************************/

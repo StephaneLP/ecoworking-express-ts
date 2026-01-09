@@ -55,6 +55,32 @@ export async function readRecordsById(res: express.Response, params: Params, cal
 CREATE
 *********************************************************/
 
+export async function createRecord(res: express.Response, params: Params, callingFunction: string): Promise<void> {
+    let msg: string
+
+
+    try {
+        const dbRes = await queries.runQueryInsert(params)
+
+        if (!dbRes.success) {
+            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') + ' -> createRecord()'
+            return sendError(res, 400, 'Erreur Requête', msg)                      
+        }
+
+        if (dbRes.result.affectedRows === 0) {
+            msg = `La ligne n'a pas pu être créée -> createRecord()`
+            return sendError(res, 404, 'Erreur Requête', msg)
+        }
+
+        const plural = (Number(dbRes.result.affectedRows) > 1 ? 's' : '')
+        sendResult(res, 200, callingFunction, `${dbRes.result.affectedRows} ligne${plural} créée${plural}`, dbRes.result.affectedRows, [])
+    }
+    catch(error: unknown) {
+        msg = (error instanceof Error ? error.message : String(error)) + ' -> createRecord()'
+        throw new Error(msg)
+    }
+}
+
 /*********************************************************
 UPDATE
 *********************************************************/
@@ -79,7 +105,8 @@ export async function deleteRecordById(res: express.Response, params: Params, ca
             return sendError(res, 404, 'Erreur Requête', msg)
         }
 
-        sendResult(res, 200, callingFunction, `${dbRes.result.affectedRows} ligne(s) supprimée(s)`, dbRes.result.affectedRows, [])
+        const plural = (Number(dbRes.result.affectedRows) > 1 ? 's' : '')
+        sendResult(res, 200, callingFunction, `${dbRes.result.affectedRows} ligne${plural} supprimée{plural}`, dbRes.result.affectedRows, [])
     }
     catch(error: unknown) {
         msg = (error instanceof Error ? error.message : String(error)) + ' -> deleteRecordById()'

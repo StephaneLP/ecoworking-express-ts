@@ -32,55 +32,39 @@ export function buildQuerySelect(params: Params): BuildQuery {
     }
 }
 
-// const sqlSelectById = (params) =>  {
-//     // SELECT : liste des colonnes
-//     let reqColumns = '*'
-//     if (params.columns) reqColumns = buildColumnsList(params).join(', ')
-
-//     // FROM : tables et jointures
-//     const reqFROM = buildFromConditions(params)
-
-//     // WHERE : liste des conditions et tableau des valeurs
-//     const URIParam = params.URIParam
-//     const arrParams = [URIParam[3]]
-//     const sqlWhereClause = ` WHERE ${params.URIParam[0].tableName}.${URIParam[1]} ${URIParam[2]} ?`
-
-//     return {reqString: `SELECT ${reqColumns} FROM ${reqFROM}${sqlWhereClause}`, reqParams: arrParams}
-// }
-
 /*********************************************************
 CONSTRUCTION REQUÊTE INSERT INTO
 *********************************************************/
 
-// const sqlInsert = (params) => {
-//     const model = params.table
-//     const arrColumns = [], arrParams = [], arrPattern = []
-//     let constraints, value
+export function buildQueryInsert(params: Params): BuildQuery {
+    const model = params.table
+    const arrColumns = [], arrParams = [], arrPattern = []
+    let constraints, value
 
-//     for(let column in model.tableColumns) {
-//         constraints = model.tableColumns[column]
-//         value = params.bodyParams[column] === undefined ? null : params.bodyParams[column]
+    for(let column in model.tableColumns) {
+        constraints = model.tableColumns[column]
+        value = params.bodyParams[column] === undefined ? null : params.bodyParams[column]
 
-//         if (constraints.autoIncrement) continue
-//         if (!constraints.nullAuthorized && value === null) {
-//             return {success: false, functionName: 'build.sqlInsert', msg: `Colonne '${column}' : Null non autorisé`}
-//         }
+        if (constraints.autoIncrement) continue
+        if (!constraints.nullAuthorized && value === null) {
+            return {success: false, functionName: 'build.sqlInsert', msg: `Colonne '${column}' : Null non autorisé`}
+        }
 
-//         arrColumns.push(column)
-//         arrParams.push(value)
-//         arrPattern.push('?')
-//     }
+        arrColumns.push(column)
+        arrParams.push(value)
+        arrPattern.push('?')
+    }
 
-//     // Date de création
-//     const dateColumn = model.dateColumns.createDate
-//     if (dateColumn) {
-//         arrColumns.push(dateColumn)
-//         arrParams.push(new Date())
-//         arrPattern.push('?')
-//     }
+    // Date de création
+    const dateColumn = model.dateColumns.createDate
+    if (dateColumn) {
+        arrColumns.push(dateColumn)
+        arrParams.push(new Date())
+        arrPattern.push('?')
+    }
 
-//     return {success: true, reqString: `INSERT INTO ${model.tableName} (${arrColumns.join()}) VALUES (${arrPattern.join()})`, reqParams: arrParams}
-// }
+    return {success: true, reqString: `INSERT INTO ${model.tableName} (${arrColumns.join()}) VALUES (${arrPattern.join()})`, reqParams: arrParams}
+}
 
 /*********************************************************
 CONSTRUCTION REQUÊTE UPDATE

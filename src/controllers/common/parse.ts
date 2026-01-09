@@ -3,7 +3,9 @@ import { stringAsBoolean } from '../../orm/queries/validate.ts'
 import { sendError } from './result.ts'
 
 type IncomingRequest = {[key: string]: any}
-type ParsedRequest = {[key: string]: string}
+type ParsedQueryRequest = {[key: string]: string}
+type ParsedUriRequest = {[key: string]: string}
+type ParsedBodyRequest = {[key: string]: any}
 
 // La fonction parseQueryParams() reçoit en paramètre l'objet Request.query, dont les valeurs
 // sont de type string|string[]|ParsedQs|ParsedQs[]|undfefined (typés comme any)
@@ -11,8 +13,8 @@ type ParsedRequest = {[key: string]: string}
 // 2. Les valeurs reçues sont simples ou multiples (array ou string avec séparateur ',')
 // 3. La fonction trim() est appliquées, les valeurs vides sont supprimées
 
-export function parseQueryParams(query: IncomingRequest): ParsedRequest {
-    const result: ParsedRequest = {}
+export function parseQueryParams(query: IncomingRequest): ParsedQueryRequest {
+    const result: ParsedQueryRequest = {}
     let arrValue: string[] = []
 
     Object.entries(query).forEach(([key, value]) => {
@@ -35,19 +37,27 @@ export function parseQueryParams(query: IncomingRequest): ParsedRequest {
     return result
 }
 
-export function parseParams(uri: IncomingRequest): ParsedRequest {
-        const result: ParsedRequest = {}
+export function parseUriParams(uriParams: IncomingRequest): ParsedUriRequest {
+        const result: ParsedUriRequest = {}
 
-        for (let key in uri) {
-            result[key] = (typeof uri[key] === 'string' ? uri[key].trim() : uri[key])
+        for (let key in uriParams) {
+            result[key] = uriParams[key].trim()
         }
 
         return result
 }
 
-export function setNestTables(query: ParsedRequest): boolean {
-    let response: boolean
+export function parseBodyParams(objRequest: IncomingRequest): ParsedBodyRequest {
+        const result: ParsedBodyRequest = {}
 
+        for (let key in objRequest) {
+            result[key] = (typeof objRequest[key] === 'string' ? objRequest[key].trim() : objRequest[key])
+        }
+
+        return result
+}
+
+export function setNestTables(query: ParsedQueryRequest): boolean {
     // Valeur par défaut : faux si DB_DEFAULT_NEST_FORMAT existe et est false ou 0, vrai autrement
     const envParam = process.env.DB_DEFAULT_NEST_FORMAT
     const defaultValue = !(envParam && stringAsBoolean(envParam) && (['false', '0'].includes(envParam)))
