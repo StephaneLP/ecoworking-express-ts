@@ -3,7 +3,7 @@
 import type { TableName } from '../../config/db.tables.ts'
 
 export type TableColumnsProperties = {
-    type: 'integer' | 'string' | 'boolean',
+    type: 'integer' | 'string' | 'boolean' | 'date',
     nullAuthorized: boolean,
     length?: number,
     emptyAuthorized?: boolean,

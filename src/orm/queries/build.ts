@@ -1,5 +1,6 @@
 import type { TableName } from '../../config/db.tables.ts'
 import type { Params, DbResult, BuildQuery, JoinType } from '../definitions/Queries.ts'
+import type { Model, TableColumnsProperties } from '../definitions/Models.ts'
 import {dbRelations, isParent, hasChildren} from '../db/db.relations.ts'
 import {op, getPKColumn} from '../db/db.tools.ts'
 
@@ -36,34 +37,44 @@ export function buildQuerySelect(params: Params): BuildQuery {
 CONSTRUCTION REQUÊTE INSERT INTO
 *********************************************************/
 
-export function buildQueryInsert(params: Params): BuildQuery {
-    const model = params.table
-    const arrColumns = [], arrParams = [], arrPattern = []
-    let constraints, value
+export function buildQueryInsert(params: Params): DbResult {
+    try {
+        const model = params.model
+        const arrColumns: string[] = [], arrPattern: string[] = []
+        const arrParams: Array<string | number | boolean | Date> = []
+        let constraints: TableColumnsProperties, value: string | number | boolean | null
+        let msg: string
 
-    for(let column in model.tableColumns) {
-        constraints = model.tableColumns[column]
-        value = params.bodyParams[column] === undefined ? null : params.bodyParams[column]
+        for(let column in model.tableColumns) {
+            constraints = model.tableColumns[column]
+            value = params.body[column] === undefined ? null : params.body[column]
 
-        if (constraints.autoIncrement) continue
-        if (!constraints.nullAuthorized && value === null) {
-            return {success: false, functionName: 'build.sqlInsert', msg: `Colonne '${column}' : Null non autorisé`}
+            if (constraints.autoIncrement) continue
+            if (!constraints.nullAuthorized && value === null) {
+                msg = `Colonne '${column}' : valeur nulle non autorisée (modèle ${model.tableName}) -> buildQueryInsert()`
+                return {success: false, message: msg}
+            }
+
+            arrColumns.push(column)
+            if (value) arrParams.push(value)
+            arrPattern.push('?')
         }
 
-        arrColumns.push(column)
-        arrParams.push(value)
-        arrPattern.push('?')
-    }
+        // Date de création
+        if (model.dateColumns && model.dateColumns.createDate) {
+            const dateCrea = model.dateColumns.createDate
+            arrColumns.push(dateCrea)
+            arrParams.push(new Date())
+            arrPattern.push('?')
+        }
 
-    // Date de création
-    const dateColumn = model.dateColumns.createDate
-    if (dateColumn) {
-        arrColumns.push(dateColumn)
-        arrParams.push(new Date())
-        arrPattern.push('?')
+        const result = {queryString: `INSERT INTO ${model.tableName} (${arrColumns.join()}) VALUES (${arrPattern.join()})`, queryParams: arrParams}
+        return {success: true, result: result}
     }
-
-    return {success: true, reqString: `INSERT INTO ${model.tableName} (${arrColumns.join()}) VALUES (${arrPattern.join()})`, reqParams: arrParams}
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildQueryInsert()'
+        throw new Error(message)
+    }
 }
 
 /*********************************************************
@@ -227,8 +238,9 @@ function buildWhereConditions(params: Params): {conditions: string[], params: (s
                         arrPattern.length = 0
                         break
                     default: // Tableau des valeurs : 1 élément
-                        value = String(param.values[0])
-                        arrParams.push(value)
+                        // value = String(param.values[0])
+                        // arrParams.push(value)
+                        arrParams.push(param.values[0])
                         pattern = '?'
                 }
 

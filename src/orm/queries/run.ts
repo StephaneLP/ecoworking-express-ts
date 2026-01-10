@@ -69,15 +69,23 @@ export async function runQueryInsert(params: Params): Promise<DbResult> {
         if (!check.success) return check
 
         // Construction de la requête SQL
-        const sql: BuildQuery = build.buildQueryInsert(params)
+        const sql: DbResult = build.buildQueryInsert(params)
+        if (!sql.success) {
+            sql.message += ' -> runQueryInsert()'
+            return sql            
+        }
 
         // Éxecution de la requête
         conn = await pool.getConnection()
-        const result = await conn.query(sql.queryString, sql.queryParams)
+        const result = await conn.query(sql.result.queryString, sql.result.queryParams)
 
         return {success: true, result: result}
     }
     catch(error: unknown) {
+        if (error && typeof error === 'object' && 'message' in error && 'code' in error && error.code === 'ER_DUP_ENTRY') {
+            return {success: false, message: `Code ${error.code}, Violation de la contrainte d'unicité (Message: ${error.message}) -> runQueryInsert()`}             
+        }
+      
         const message: string = (error instanceof Error ? error.message : String(error)) + ' -> runQueryInsert()'
         throw new Error(message)
     }

@@ -129,7 +129,7 @@ export function checkWhereParams(params: WhereParams): DbResult {
                             msg = `Modèle ${param.model.tableName} : propriété length absente de définition de la colonne ${param.column} de type string`
                             throw new Error(msg)
                         }
-                        if (value === '') {
+                        if (value === '') { // parse queryParams: valeur jamais vide / parse uriParams: valeur peut être vide
                             msg = `Paramètre ${param.column}=${value} : valeur vide (modèle ${param.model.tableName}) -> checkWhereParams()`
                             return {success: false, message: msg}
                         }
@@ -193,7 +193,7 @@ export function checkBodyParams(params: Params): DbResult {
     try {
         const bodyParams = params.body
         const model = params.model
-        let constraints: TableColumnsProperties, value: string | number | boolean | Date
+        let constraints: TableColumnsProperties, value: string | number | boolean | null, typeValid: boolean
 
         for (let column in bodyParams) {
             constraints = model.tableColumns[column]
@@ -203,55 +203,68 @@ export function checkBodyParams(params: Params): DbResult {
                 throw new Error(msg)
             }
 
-            const typeOK = (['string', 'number', 'boolean'].includes(typeof bodyParams[column]) || bodyParams[column] === null)
-            if (!typeOK) {
+            typeValid = (['string', 'number', 'boolean'].includes(typeof bodyParams[column]) || bodyParams[column] === null)
+            if (!typeValid) {
                 msg = `Clé ${column} : valeur reçue de type incorrect (${typeof bodyParams[column]}) -> checkBodyParams()`
                 return {success: false, message: msg}                
             }
 
+            value = bodyParams[column]
 
+            if (value === null) {
+                if (!constraints.nullAuthorized) {
+                    msg = `Colonne ${column} : valeur nulle non autorisée (modèle ${model.tableName}) -> checkBodyParams()`
+                    return {success: false, message: msg}
+                }
+                continue
+            }
 
-
-            // value = bodyParams[column]
-            // if (value === null) {
-            //     if (!constraints.nullAuthorized) return {success: false, functionName: 'validate.checkBodyParams', msg: `Colonne '${column}', valeur null non autorisée`}
-            //     continue
-            // }
-            // switch (constraints.type) {
-            //     case 'integer':
-            //         if (typeof value !== 'number') {
-            //             return {success: false, functionName: 'validate.checkBodyParams', msg: `Erreur type de donnée (colonne '${column}', type 'number' attendu)`}
-            //         }
-            //         if (!stringAsInteger(String(value))) {
-            //             return {success: false, functionName: 'validate.checkBodyParams', msg: `Erreur type de donnée (colonne '${column}', type 'integer' attendu)`}
-            //         }
-            //         break
-            //     case 'string':
-            //         if (typeof value !== 'string') {
-            //             return {success: false, functionName: 'validate.checkBodyParams', msg: `Erreur type de donnée (colonne '${column}', type 'string' attendu)`}
-            //         }
-            //         if (value.length > constraints.length) {
-            //             return {success: false, functionName: 'validate.checkBodyParams', msg: `Erreur longueur (colonne '${column}', longueur max : ${constraints.length})`}
-            //         }
-            //         if(!constraints.emptyAuthorized && value === '') {
-            //             return {success: false, functionName: 'validate.checkBodyParams', msg: `Erreur longueur (colonne '${column}', colonne vide non autorisée)`}
-            //         }
-            //         break
-            //     case 'boolean':
-            //         if (![0,1,true,false].includes(value)) {
-            //             return {success: false, functionName: 'validate.checkBodyParams', msg: `Erreur type de donnée (colonne '${column}', type 'boolean' attendu)`}
-            //         }
-            //         bodyParams[column] = Number(value) // true => 1, false => 0
-            //         break
-            //     case 'date':
-            //         if (isNaN(Date.parse(value))) {
-            //             return {success: false, functionName: 'validate.checkBodyParams', msg: `Erreur type de donnée (colonne '${column}', type 'date' attendu / date invalide)`}
-            //         }
-            //         bodyParams[column] = new Date(value)
-            //         break
-            // }
+            switch (constraints.type) {
+                case 'integer':
+                    typeValid = ((typeof value === 'number' && stringAsInteger(String(value))) || (typeof value === 'string' && stringAsInteger(value)))
+                    if (!typeValid) {
+                        msg = `Paramètre ${column}=${value} : type integer attendu (modèle ${model.tableName}) -> checkBodyParams()`
+                        return {success: false, message: msg}
+                    }
+                    if (typeof value === 'string') bodyParams[column] = Number(value)
+                    break
+                case 'string':
+                    if (typeof value !== 'string') {
+                        msg = `Colonne ${column}=${value} : type string attendu (modèle ${model.tableName}) -> checkBodyParams()`
+                        return {success: false, message: msg}                        
+                    }
+                    if (!constraints.emptyAuthorized && value === '') {
+                        msg = `Colonne ${column} : valeur vide non autorisée (modèle ${model.tableName}) -> checkBodyParams()`
+                        return {success: false, message: msg}
+                    }
+                    if (!constraints.length) {
+                        msg = `Modèle ${model.tableName} : propriété length absente de définition de la colonne ${column} de type string`
+                        throw new Error(msg)
+                    }
+                    if (value.length > constraints.length) {
+                        msg = `Paramètre ${column}=${value} : longueur > max authorisé (${constraints.length}) (modèle ${model.tableName}) -> checkBodyParams()`
+                        return {success: false, message: msg}
+                    }
+                    break
+                case 'boolean':
+                    typeValid = (typeof value === 'boolean' || (typeof value === 'number' && [0, 1].includes(value)) || (typeof value === 'string' && stringAsBoolean(value)))
+                    if (!typeValid) {
+                        msg = `Paramètre ${column}=${value} : type boolean attendu (modèle ${model.tableName}) -> checkBodyParams()`
+                        return {success: false, message: msg}
+                    }
+                    if (typeof value === 'string') bodyParams[column] = (['1', 'true'].includes(value.toLowerCase()) ? 1 : 0)
+                    if (typeof value === 'boolean') bodyParams[column] = Number(value)
+                    break
+                case 'date':
+                    if (typeof value !== 'string' || isNaN(Date.parse(value))) {
+                        msg = `Paramètre ${column}=${value} : type date attendu, la chaine de caractères ne représente pas une date valide (modèle ${model.tableName}) -> checkBodyParams()`
+                        return {success: false, message: msg}
+                    }
+                    bodyParams[column] = new Date(value)
+                    break
+            }
         }
-
+        
         return {success: true}
     }
     catch(error: unknown) {

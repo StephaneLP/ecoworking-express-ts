@@ -52,5 +52,5 @@ export type DbResult = {
 
 export type BuildQuery = {
     queryString: string,
-    queryParams: Array<string | number | boolean>
+    queryParams: Array<string | number | boolean | Date>
 }
