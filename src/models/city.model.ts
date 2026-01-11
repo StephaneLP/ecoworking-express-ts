@@ -21,7 +21,7 @@ export const city: Model = {
         },
         rank: {
             type: 'integer',
-            nullAuthorized: false
+            nullAuthorized: true
         }
     },
     dateColumns: {

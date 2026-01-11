@@ -1,5 +1,5 @@
 import type { TableName } from '../../config/db.tables.ts'
-import type { Params, DbResult, BuildQuery, JoinType } from '../definitions/Queries.ts'
+import type { Params, DbResult, BuildQuery, DbDataTypes } from '../definitions/Queries.ts'
 import type { Model, TableColumnsProperties } from '../definitions/Models.ts'
 import {dbRelations, isParent, hasChildren} from '../db/db.relations.ts'
 import {op, getPKColumn} from '../db/db.tools.ts'
@@ -41,8 +41,8 @@ export function buildQueryInsert(params: Params): DbResult {
     try {
         const model = params.model
         const arrColumns: string[] = [], arrPattern: string[] = []
-        const arrParams: Array<string | number | boolean | Date> = []
-        let constraints: TableColumnsProperties, value: string | number | boolean | null
+        const arrParams: Array<DbDataTypes> = []
+        let constraints: TableColumnsProperties, value: DbDataTypes
         let msg: string
 
         for(let column in model.tableColumns) {
@@ -55,9 +55,11 @@ export function buildQueryInsert(params: Params): DbResult {
                 return {success: false, message: msg}
             }
 
-            arrColumns.push(column)
-            if (value) arrParams.push(value)
-            arrPattern.push('?')
+            if (value) {
+                arrColumns.push(column)
+                arrParams.push(value)
+                arrPattern.push('?')
+            }
         }
 
         // Date de création
@@ -81,30 +83,48 @@ export function buildQueryInsert(params: Params): DbResult {
 CONSTRUCTION REQUÊTE UPDATE
 *********************************************************/
 
-// const sqlUpdateById = (params) => {
-//     const arrColumns = [], arrParams = []
-//     const URIParam = params.URIParam
-//     const model = params.table
+export function buildUpdateById(params: Params): DbResult {
+    try {
+        const model = params.model
+        const arrColumns: string[] = [], arrPattern: string[] = []
+        const arrParams: Array<DbDataTypes> = []
+        let constraints: TableColumnsProperties, value: DbDataTypes
+        let msg: string
 
-//     // Colonnes mises à jour
-//     for(let column in params.bodyParams) {
-//         arrColumns.push(`${column}=?`)
-//         arrParams.push(params.bodyParams[column])
-//     }
+        for(let column in params.body) {
 
-//     // Date de modification
-//     const dateColumn = model.dateColumns.updateDate
-//     if (dateColumn) {
-//         arrColumns.push(`${dateColumn}=?`)
-//         arrParams.push(new Date())
-//     }
+            constraints = model.tableColumns[column]
+            value = params.body[column]
 
-//     // Clause WHERE
-//     const condition = `${URIParam[1]} ${URIParam[2]} ?`
-//     arrParams.push(URIParam[3])
-    
-//     return {success: true, reqString: `UPDATE ${model.tableName} SET ${arrColumns.join()} WHERE ${condition}`, reqParams: arrParams}
-// }
+            if (constraints.autoIncrement) continue
+            if (!constraints.nullAuthorized && value === null) {
+                msg = `Colonne '${column}' : valeur nulle non autorisée (modèle ${model.tableName}) -> buildQueryInsert()`
+                return {success: false, message: msg}
+            }
+
+            arrColumns.push(`${column}=?`)
+            arrParams.push(value)
+        }
+
+        // Date de modification
+        if (model.dateColumns && model.dateColumns.updateDate) {
+            const dateUpdate = model.dateColumns.updateDate
+            arrColumns.push(`${dateUpdate}=?`)
+            arrParams.push(new Date())
+        }
+
+        // WHERE : liste des conditions et tableau des valeurs
+        const whereConditions = buildWhereConditions(params)
+        arrParams.push(whereConditions.params[0])
+
+        const result = {queryString: `UPDATE ${model.tableName} SET ${arrColumns.join()} WHERE ${whereConditions.conditions[0]}`, queryParams: arrParams}
+        return {success: true, result: result}
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> buildQueryInsert()'
+        throw new Error(message)
+    }
+}
 
 /*********************************************************
 CONSTRUCTION REQUÊTE DELETE

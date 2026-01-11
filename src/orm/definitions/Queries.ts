@@ -2,6 +2,8 @@ import type { Model } from './Models.ts'
 
 export type JoinType = 'INNER' | 'LEFT' | 'RIGHT'
 
+export type DbDataTypes = string | number | boolean | Date | null
+
 export type Table = {
     model: Model,
     columns: string[]
@@ -52,5 +54,5 @@ export type DbResult = {
 
 export type BuildQuery = {
     queryString: string,
-    queryParams: Array<string | number | boolean | Date>
+    queryParams: Array<DbDataTypes>
 }

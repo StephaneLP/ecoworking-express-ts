@@ -85,6 +85,32 @@ export async function createRecord(res: express.Response, params: Params, callin
 UPDATE
 *********************************************************/
 
+export async function updateRecordById(res: express.Response, params: Params, callingFunction: string): Promise<void> {
+    let msg: string
+
+
+    try {
+        const dbRes = await queries.runQueryUpdateById(params)
+
+        if (!dbRes.success) {
+            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') + ' -> updateRecordById()'
+            return sendError(res, 400, 'Erreur Requête', msg)                      
+        }
+
+        if (dbRes.result.affectedRows === 0) {
+            msg = `La ligne n'a pas pu être modifiée -> updateRecordById()`
+            return sendError(res, 404, 'Erreur Requête', msg)
+        }
+
+        const plural = (Number(dbRes.result.affectedRows) > 1 ? 's' : '')
+        sendResult(res, 200, callingFunction, `${dbRes.result.affectedRows} ligne${plural} modifiées${plural}`, dbRes.result.affectedRows, [])
+    }
+    catch(error: unknown) {
+        msg = (error instanceof Error ? error.message : String(error)) + ' -> updateRecordById()'
+        throw new Error(msg)
+    }
+}
+
 /*********************************************************
 DELETE
 *********************************************************/

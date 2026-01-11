@@ -10,7 +10,8 @@ import { pool } from '../../config/db.init.ts'
 *********************************************************/
 
 export async function runQuerySelect(params: Params): Promise<DbResult> {
-    let conn 
+    let conn
+
     try {
         let checkParams: DbResult
 
@@ -61,12 +62,12 @@ export async function runQuerySelect(params: Params): Promise<DbResult> {
 *********************************************************/
 
 export async function runQueryInsert(params: Params): Promise<DbResult> {
-    let conn 
+    let conn
+    
     try {
-
         // Validation des données (body)
-        const check = validate.checkBodyParams(params)
-        if (!check.success) return check
+        const checkParams = validate.checkBodyParams(params)
+        if (!checkParams.success) return checkParams
 
         // Construction de la requête SQL
         const sql: DbResult = build.buildQueryInsert(params)
@@ -98,6 +99,53 @@ export async function runQueryInsert(params: Params): Promise<DbResult> {
 ÉXÉCUTION REQUÊTE UPDATE
 *********************************************************/
 
+export async function runQueryUpdateById(params: Params): Promise<DbResult> {
+    let conn
+    
+    try {
+        let checkParams: DbResult
+
+        // Validation des Paramètres (clause WHERE)
+        if (!params.where || params.where.length === 0) {
+            throw new Error(`Paramétrage de la fonction update : clause Where absente (params.where non renseigné)`)
+        }
+        
+        checkParams = validate.checkWhereParams(params.where)
+        if (!checkParams.success) {
+            checkParams.message += ' -> runQueryUpdateById()'
+            return checkParams
+        }
+
+        // Validation des données (body)
+        checkParams = validate.checkBodyParams(params)
+        if (!checkParams.success) return checkParams
+
+        // Construction de la requête SQL
+        const sql: DbResult = build.buildUpdateById(params)
+        if (!sql.success) {
+            sql.message += ' -> runQueryUpdateById()'
+            return sql            
+        }
+
+        // Éxecution de la requête
+        conn = await pool.getConnection()
+        const result = await conn.query(sql.result.queryString, sql.result.queryParams)
+
+        return {success: true, result: result}
+    }
+    catch(error: unknown) {
+        if (error && typeof error === 'object' && 'message' in error && 'code' in error && error.code === 'ER_DUP_ENTRY') {
+            return {success: false, message: `Code ${error.code}, Violation de la contrainte d'unicité (Message: ${error.message}) -> runQueryUpdateById()`}             
+        }
+      
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> runQueryUpdateById()'
+        throw new Error(message)
+    }
+    finally {
+        if (conn) conn.end()
+    }
+}
+
 /*********************************************************
 ÉXÉCUTION REQUÊTE DELETE
 *********************************************************/
@@ -105,14 +153,12 @@ export async function runQueryInsert(params: Params): Promise<DbResult> {
 export async function runQueryDeleteById(params: Params): Promise<DbResult> {
     let conn 
     try {
-        let checkParams: DbResult
-
         // Validation des Paramètres (clause WHERE)
         if (!params.where || params.where.length === 0) {
             throw new Error(`Paramétrage de la fonction delete : clause Where absente (params.where non renseigné)`)
         }
         
-        checkParams = validate.checkWhereParams(params.where)
+        const checkParams = validate.checkWhereParams(params.where)
         if (!checkParams.success) {
             checkParams.message += ' -> runQueryDeleteById()'
             return checkParams

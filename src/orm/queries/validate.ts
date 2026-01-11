@@ -1,5 +1,5 @@
 import type { TableName } from '../../config/db.tables.ts'
-import type { Table, JoinTables, WhereParams, OrderParams, DbResult, Params } from '../definitions/Queries.ts'
+import type { Table, JoinTables, WhereParams, OrderParams, DbResult, Params, DbDataTypes } from '../definitions/Queries.ts'
 import type { DbRelations } from '../definitions.ts'
 import type { Model, TableColumnsProperties } from '../definitions/Models.ts'
 import {dbRelations, isParent, hasChildren} from '../db/db.relations.ts'
@@ -193,7 +193,7 @@ export function checkBodyParams(params: Params): DbResult {
     try {
         const bodyParams = params.body
         const model = params.model
-        let constraints: TableColumnsProperties, value: string | number | boolean | null, typeValid: boolean
+        let constraints: TableColumnsProperties, value: DbDataTypes, typeValid: boolean
 
         for (let column in bodyParams) {
             constraints = model.tableColumns[column]
@@ -203,7 +203,7 @@ export function checkBodyParams(params: Params): DbResult {
                 throw new Error(msg)
             }
 
-            typeValid = (['string', 'number', 'boolean'].includes(typeof bodyParams[column]) || bodyParams[column] === null)
+            typeValid = (['string', 'number', 'boolean'].includes(typeof bodyParams[column]) || bodyParams[column] === null) 
             if (!typeValid) {
                 msg = `Clé ${column} : valeur reçue de type incorrect (${typeof bodyParams[column]}) -> checkBodyParams()`
                 return {success: false, message: msg}                
