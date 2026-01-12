@@ -45,8 +45,10 @@ import './src/config/db.init.ts'
 Routes
 *********************************************************/
 
+import signRoutes from './src/routes/sign.routes.ts'
 import cityRoutes from './src/routes/city.routes.ts'
 
+app.use('/connexion/', signRoutes)
 app.use('/ville/', cityRoutes)
 
 /*********************************************************

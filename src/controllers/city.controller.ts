@@ -1,6 +1,6 @@
+import type { Request, Response, NextFunction } from 'express'
 import type { Params } from '../orm/definitions.ts'
 
-import express from 'express'
 import { city } from '../models/city.model.ts'
 import { ecoworking } from '../models/ecoworking.model.ts'
 import { op } from '../orm/db.ts'
@@ -12,7 +12,7 @@ import * as crud from './common/crud.ts'
 READ / GET / SELECT
 *********************************************************/
 
-export async function readCities(req: express.Request, res: express.Response): Promise<void> {
+export async function readCities(req: Request, res: Response): Promise<void> {
     try {
         // Query Parameters
         const query = parseQueryParams(req.query)
@@ -38,7 +38,7 @@ export async function readCities(req: express.Request, res: express.Response): P
     }
 }
 
-export async function readCityList(req: express.Request, res: express.Response): Promise<void> {
+export async function readCityList(req: Request, res: Response): Promise<void> {
     try {
         // Query Parameters
         const query = parseQueryParams(req.query)
@@ -59,7 +59,7 @@ export async function readCityList(req: express.Request, res: express.Response):
     }
 }
 
-export async function readCityById(req: express.Request, res: express.Response): Promise<void> {
+export async function readCityById(req: Request, res: Response): Promise<void> {
     try {
         // Path Parameters
         const uriParams = parseUriParams(req.params)
@@ -86,7 +86,7 @@ export async function readCityById(req: express.Request, res: express.Response):
 CREATE / POST / INSERT INTO
 *********************************************************/
 
-export async function createCity(req: express.Request, res: express.Response): Promise<void> {
+export async function createCity(req: Request, res: Response): Promise<void> {
     try {
         // Body Parameters
         const body = parseBodyParams(req.body)
@@ -109,7 +109,7 @@ export async function createCity(req: express.Request, res: express.Response): P
 UPDATE / PUT / INSERT INTO
 *********************************************************/
 
-export async function updateCityById(req: express.Request, res: express.Response): Promise<void> {
+export async function updateCityById(req: Request, res: Response): Promise<void> {
     try {
         // Path Parameters
         const uriParams = parseUriParams(req.params)
@@ -136,7 +136,7 @@ export async function updateCityById(req: express.Request, res: express.Response
 DELETE / DELETE / DELETE
 *********************************************************/
 
-export async function deleteCityById(req: express.Request, res: express.Response): Promise<void> {
+export async function deleteCityById(req: Request, res: Response): Promise<void> {
     try {
         // Path Parameters
         const uriParams = parseUriParams(req.params)

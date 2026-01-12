@@ -151,7 +151,8 @@ export async function runQueryUpdateById(params: Params): Promise<DbResult> {
 *********************************************************/
 
 export async function runQueryDeleteById(params: Params): Promise<DbResult> {
-    let conn 
+    let conn
+
     try {
         // Validation des Paramètres (clause WHERE)
         if (!params.where || params.where.length === 0) {
@@ -182,4 +183,25 @@ export async function runQueryDeleteById(params: Params): Promise<DbResult> {
     }
 }
 
+/*********************************************************
+ÉXÉCUTION REQUÊTE (CHAÎNE SQL PASSÉE EN PARAMÈTRE)
+*********************************************************/
 
+export async function runQuery(sql: BuildQuery): Promise<DbResult> {
+    let conn
+
+    try {
+        // Éxecution de la requête
+        conn = await pool.getConnection()
+        const result = await conn.query(sql.queryString, sql.queryParams)
+
+        return {success: true, result: result}        
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> runQuery()'
+        throw new Error(message)
+    }
+    finally {
+        if (conn) conn.end()
+    }
+}

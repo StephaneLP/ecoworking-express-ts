@@ -30,7 +30,6 @@ export function formatResponse(params: Params, result: any) {
             }            
         }
 
-
         for (let line of result) {
             // Récupération de la clé buildKey dans la réponse dbRes (undefined si absente)
             mainBuildKey = line[mainTableName].buildKey

@@ -58,7 +58,6 @@ CREATE
 export async function createRecord(res: express.Response, params: Params, callingFunction: string): Promise<void> {
     let msg: string
 
-
     try {
         const dbRes = await queries.runQueryInsert(params)
 
@@ -87,7 +86,6 @@ UPDATE
 
 export async function updateRecordById(res: express.Response, params: Params, callingFunction: string): Promise<void> {
     let msg: string
-
 
     try {
         const dbRes = await queries.runQueryUpdateById(params)
