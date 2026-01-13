@@ -1,8 +1,9 @@
 // const express = require('express')
 import express from 'express'
-const router = express.Router()
 import * as cityController from '../controllers/city.controller.ts'
-// const {authenticate, authorize} = require('../middlewares/protect')
+import {authenticate, authorize} from '../middlewares/protect.ts'
+
+const router = express.Router()
 
 router.route('/')
     .get(cityController.readCities)
@@ -12,8 +13,7 @@ router.route('/liste/')
     .get(cityController.readCityList)
 
 router.route('/:id')    
-    .get(cityController.readCityById)
-//     .get(authenticate, authorize(['superadmin','admin']), cityController.readCityById)
+    .get(authenticate, authorize(['superadmin', 'admin']), cityController.readCityById)
     .put(cityController.updateCityById)
     .delete(cityController.deleteCityById)
 

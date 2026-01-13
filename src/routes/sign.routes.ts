@@ -1,7 +1,8 @@
 // const express = require('express')
 import express from 'express'
-const router = express.Router()
 import * as signController from '../controllers/sign.controller.ts'
+
+const router = express.Router()
 
 // router.route('/inscription')
 //     .post(signController.signUp)

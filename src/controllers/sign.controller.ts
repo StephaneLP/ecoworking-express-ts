@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from 'express'
 
-import pkg from 'jsonwebtoken';
-const { sign, decode, verify } = pkg;
+import pkg from 'jsonwebtoken'
+const { sign, decode, verify } = pkg
 
 import * as queries from '../orm/queries.ts'
-import { comparePasswords } from './common/auth.ts'
+import { comparePasswords } from '../utils/auth.ts'
 import { parseQueryParams, parseUriParams, parseBodyParams, setNestTables} from './common/parse.ts'
 import { sendResult, sendError, formatResponse } from './common/result.ts'
 import { logError } from '../utils/log.ts'
