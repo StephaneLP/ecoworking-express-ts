@@ -1,14 +1,15 @@
-const nodemailer = require("nodemailer")
-const fs = require("fs")
+import { createTransport } from 'nodemailer'
+import { readFileSync } from 'fs'
+
 const mailFrom = {address: process.env.MAIL_ADDRESS, password: process.env.MAIL_PASSWORD}
 
-const sendMailRegistration = async (address, subject, nickName, url, template) => {
-    let data = fs.readFileSync("./src/templates/" + template, { encoding: 'utf8' })
+export async function sendMailRegistration(address: string, subject: string, nickName: string, url: string, template: string) {
+    let data: string = readFileSync("./src/mailer/templates/" + template, { encoding: 'utf8' })
 
     data = data.replace("$pseudo", nickName)
     data = data.replace("$url", url)
 
-    const transporter = nodemailer.createTransport({
+    const transporter = createTransport({
         host : "mail.mailo.com",
         port : 465,
         auth : {
@@ -26,5 +27,3 @@ const sendMailRegistration = async (address, subject, nickName, url, template) =
 
     return info
 }
-
-module.exports = {sendMailRegistration}

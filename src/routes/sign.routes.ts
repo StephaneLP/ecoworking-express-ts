@@ -4,8 +4,8 @@ import * as signController from '../controllers/sign.controller.ts'
 
 const router = express.Router()
 
-// router.route('/inscription')
-//     .post(signController.signUp)
+router.route('/inscription')
+    .post(signController.signUp)
 
 router.route('/authentification')
     .post(signController.signIn)

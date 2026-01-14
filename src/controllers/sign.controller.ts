@@ -1,13 +1,15 @@
 import type { Request, Response, NextFunction } from 'express'
+import type { Params } from '../orm/definitions.ts'
 
 import pkg from 'jsonwebtoken'
 const { sign, decode, verify } = pkg
 
 import * as queries from '../orm/queries.ts'
-import { comparePasswords } from '../utils/auth.ts'
+import { user } from '../models/user.model.ts'
+import { comparePasswords, hashPassword } from './common/auth.ts'
 import { parseQueryParams, parseUriParams, parseBodyParams, setNestTables} from './common/parse.ts'
 import { sendResult, sendError, formatResponse } from './common/result.ts'
-import { logError } from '../utils/log.ts'
+import { sendMailRegistration } from '../mailer/mail.ts'
 
 /*********************************************************
 [CONNEXION] 
@@ -68,7 +70,7 @@ export async function signIn(req: Request, res: Response): Promise<void> {
         const nickname = dbRes.result[0].nickname
 
         if (!id || !nickname) {
-            msg = `Impossible de récupérer l'id et/ou le pseudo de l'utilisateur corerspondant à l'identifiant ${email}`
+            msg = `Impossible de récupérer l'id et/ou le pseudo de l'utilisateur correspondant à l'identifiant ${email}`
             throw new Error(msg)            
         }
 
@@ -89,73 +91,109 @@ export async function signIn(req: Request, res: Response): Promise<void> {
     }
 }
 
-// const user = require('../models/user.model')
-// const role = require('../models/role.model')
-// const jwt = require("jsonwebtoken")
-// const crud = require('./common/crud')
-// const queries = require('../models/common/runQueries')
-// const {sendResult, sendError} = require('./common/result')
-// const {hashPassword, comparePasswords} = require('./common/auth')
-// const {trimStringValues, checkEmailFormat, checkNickNameFormat, checkPasswordFormat} = require('../utils/tools')
-// const {sendMailRegistration} = require('../utils/mail')
-// const {op} = require('../config/db.params')
-
 /*********************************************************
 [INSCRIPTION] CREATE / POST / INSERT INTO
 *********************************************************/
 
-// const signUp = async (req, res) => {
-//     const body = trimStringValues(req.body)
+export async function signUp(req: Request, res: Response): Promise<void> {
+    let msg: string
 
-//     // Contrôle du format l'email
-//     if (!checkEmailFormat(body.email)) {
-//         return sendError(res, 400, 'signUp', 'Le format de l\'email est incorrect', '')    
-//     }
+    try {
+        // Récupération de la clé privée
+        const privateKey = process.env.SIGNUP_KEY
+        if (!privateKey) {
+            msg = `Impossible de récupérer la valeur de la variable d'environnement SIGNUP_KEY`
+            throw new Error(msg)
+        }
 
-//     // Contrôle du format du pseudo
-//     if (!checkNickNameFormat(body.nickname)) {
-//         return sendError(res, 400, 'signUp', 'Le format du pseudo est incorrect', '')      
-//     }
+        // Récupération de la durée de validité du token
+        const duration = process.env.DURATION_CONNECT_USER as any
+        if (!duration) {
+            msg = `Impossible de récupérer la valeur de la variable d'environnement DURATION_CONNECT_USER`
+            throw new Error(msg)
+        }
 
-//     // Contrôle du format du mot de passe
-//     if (!checkPasswordFormat(body.password)) {
-//         return sendError(res, 400, 'signUp', 'Le format du mot de passe est incorrect', '')        
-//     }
+        // Body Parameters
+        const body = parseBodyParams(req.body)
 
-//     // Hachage du mot de passe
-//     const hash = await hashPassword(body.password)
-//     if (!hash.success) {
-//         return sendError(res, 500, 'createUser/hashPassword', 'Erreur Serveur', hash.msg)
-//     }
-//     body.password = hash.password
+        // Contrôle du format l'email
+        if (!checkEmailFormat(body.email)) {
+            msg = 'Erreur Requête : format de l\'email incorrect'
+            return sendError(res, 400, msg, ' -> signUp()') 
+        }
 
-//     // Ajout des colonnes absentes du body (valeurs par défaut)
-//     body['is_verified'] = 0
-//     body['icon_color'] = `#${process.env.SIGNUP_ICON_COLOR}`
-//     body['role_id'] = Number(process.env.SIGNUP_ROLE_ID)
-//     body['icon_id'] = Number(process.env.SIGNUP_ICON_ID)
+        // Contrôle du format du pseudo
+        if (!checkNickNameFormat(body.nickname)) {
+            msg = 'Erreur Requête : format du pseudo incorrect'
+            return sendError(res, 400, msg, ' -> signUp()') 
+        }
 
-//     const params = {
-//         table: user,
-//         bodyParams: body,
-//         functionName: 'signUp',
-//     }
+        // Contrôle du format du mot de passe
+        if (!checkPasswordFormat(body.password)) {
+            msg = 'Erreur Requête : format du mot de passe incorrect'
+            return sendError(res, 400, msg, ' -> signUp()')       
+        }
 
-//     try {
-//         const dbRes = await queries.runQueryInsert(params)
+        // Hachage du mot de passe
+        const hash = await hashPassword(body.password)
+        body.password = hash
 
-//         if (!dbRes.success) {
-//             return sendError(res, 400, `${params.functionName}/${dbRes.functionName}`, 'Erreur Requête', dbRes.msg)            
-//         }
+        // Ajout des colonnes absentes du body (valeurs par défaut)
+        body['is_verified'] = 0
+        body['icon_color'] = `#${process.env.SIGNUP_ICON_COLOR}`
+        body['role_id'] = Number(process.env.SIGNUP_ROLE_ID)
+        body['icon_id'] = Number(process.env.SIGNUP_ICON_ID)
 
-//         const token = jwt.sign({userId: dbRes.result.insertId}, process.env.SIGNUP_KEY, {expiresIn: process.env.DURATION_CONNECT_USER})
-//         const url = 'http://localhost:3000/inscription-confirm/' + token
-//         const info = await sendMailRegistration(body.email, 'Inscription site Ecoworking', body.nickname, url, 'mailSignUp.html')
-//         const message = `Un mail de confirmation a été envoyé à l'adresse suivante : ${info.accepted[0]}`
+        // Requête création de l'utilisateur
+        const params = {} as Params
 
-//         sendResult(res, 200, params.functionName, message, dbRes.result.affectedRows, [])
-//     }
-//     catch(err) {
-//         sendError(res, 500, params.functionName, 'Erreur Serveur', err.message)
-//     }
-// }
+        params.model = user
+        params.body = body
+
+        const dbRes = await queries.runQueryInsert(params)
+
+        if (!dbRes.success) {
+            msg = (dbRes.message ? dbRes.message : 'Erreur inattendue') + ' -> signUp()'
+            return sendError(res, 400, 'Erreur Requête', msg)                      
+        }
+
+        if (dbRes.result.affectedRows === 0) {
+            msg = `L'utilisateur n'a pas pu être créé -> signUp()`
+            return sendError(res, 404, 'Erreur Requête', msg)
+        }
+
+        const token = sign({userId: dbRes.result.insertId}, privateKey, {expiresIn: duration})
+        const url = 'http://localhost:3000/inscription-confirm/' + token
+        const info = await sendMailRegistration(body.email,  'Inscription site Ecoworking', body.nickname, url, 'mailSignUp.html')
+
+        msg = `Un mail de confirmation a été envoyé à l'adresse suivante : ${info.accepted[0]}`
+        sendResult(res, 200, 'signUp', msg, dbRes.result.affectedRows, [])
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> signUp()'
+        sendError(res, 500, 'Erreur Serveur', message)
+    }
+}
+
+/*********************************************************
+OUTILS DE VÉRIFICATION
+*********************************************************/
+
+// Contrôle du format l'email
+function checkEmailFormat(email: string): boolean {
+    const exp = /([\w-.]+@[\w.]+\.{1}[\w]+)/
+    return exp.test(email)
+}
+
+// Contrôle du format du pseudo
+function checkNickNameFormat(nickname: string): boolean {
+    const exp = /^(?=.*[a-zA-Z0-9])[a-zA-Z0-9]{5,}$/
+    return exp.test(nickname)
+}
+
+// Contrôle du format du mot de passe
+function checkPasswordFormat(password: string): boolean {
+    const exp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/
+    return exp.test(password)
+}
+
