@@ -55,7 +55,7 @@ app.use('/ville/', cityRoutes)
 Ouverture du port
 *********************************************************/
 
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 3001
 
 app.listen(port, () => {
     logEvent(`L'application est démarrée sur le port ${port}`)
