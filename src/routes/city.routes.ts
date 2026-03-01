@@ -9,6 +9,9 @@ router.route('/')
     .get(cityController.readCities)
     .post(cityController.createCity)
 
+router.route('/all/')
+    .get(cityController.readAllCities)
+
 router.route('/liste/')
     .get(cityController.readCityList)
 

@@ -21,6 +21,32 @@ export async function readCities(req: Request, res: Response): Promise<void> {
         const params = {} as Params
         
         params.nestTables = setNestTables(query)
+        params.mainTable = {model: city, columns: ['id', 'name']}
+        params.joinTables = [{model: ecoworking, columns: ['id', 'name'], join: 'INNER'}]
+        params.order = [{model: city, column: query.col || 'name', dir: query.dir || 'ASC'}]
+
+        params.where = []
+        if(query.id) params.where.push({model: city, column: 'id', op: op.in, values: query.id.split(',')})
+        if(query.name) params.where.push({model: city, column: 'name', op: op.like, values: [query.name], pattern: '%?%'})
+        params.where.push({model: city, column: 'is_active', op: op.equal, values: ['true']})
+
+        await crud.readRecords(res, params, 'readCities')        
+    }
+    catch(error: unknown) {
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readCities()'
+        sendError(res, 500, 'Erreur Serveur', message)
+    }
+}
+
+export async function readAllCities(req: Request, res: Response): Promise<void> {
+    try {
+        // Query Parameters
+        const query = parseQueryParams(req.query)
+
+        // Paramètres de la requête
+        const params = {} as Params
+        
+        params.nestTables = setNestTables(query)
         params.mainTable = {model: city, columns: ['*']}
         params.joinTables = [{model: ecoworking, columns: ['*'], join: 'LEFT'}]
         params.order = [{model: city, column: query.col || 'name', dir: query.dir || 'ASC'}]
@@ -33,7 +59,7 @@ export async function readCities(req: Request, res: Response): Promise<void> {
         await crud.readRecords(res, params, 'readCities')        
     }
     catch(error: unknown) {
-        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readCities()'
+        const message: string = (error instanceof Error ? error.message : String(error)) + ' -> readAllCities()'
         sendError(res, 500, 'Erreur Serveur', message)
     }
 }
